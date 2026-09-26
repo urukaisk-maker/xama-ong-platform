@@ -23,7 +23,8 @@ CREATE TABLE products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     category VARCHAR(100),
-    unit VARCHAR(20) DEFAULT 'kg'
+    unit VARCHAR(20) DEFAULT 'kg',
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE batches (
@@ -32,7 +33,8 @@ CREATE TABLE batches (
     origin VARCHAR(100) NOT NULL,
     quantity NUMERIC(10,2) NOT NULL CHECK (quantity >= 0),
     expiry_date DATE NOT NULL,
-    status VARCHAR(20) DEFAULT 'disponible'
+    status VARCHAR(20) DEFAULT 'disponible',
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE families (
@@ -42,7 +44,8 @@ CREATE TABLE families (
     minors INTEGER DEFAULT 0,
     dietary_restrictions TEXT,
     site VARCHAR(50),
-    active BOOLEAN DEFAULT TRUE
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE deliveries (
@@ -50,7 +53,8 @@ CREATE TABLE deliveries (
     family_id UUID REFERENCES families(id) ON DELETE CASCADE,
     delivery_date DATE NOT NULL,
     site VARCHAR(50),
-    status VARCHAR(20) DEFAULT 'pendiente'
+    status VARCHAR(20) DEFAULT 'pendiente',
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE TABLE nevera_rations (
