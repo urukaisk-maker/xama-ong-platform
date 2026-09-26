@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
+from app.modules.families.router import router as families_router
 from app.modules.inventory.router import router as inventory_router
 
 # importar modelos para que Base los conozca antes de create_all
+from app.modules.families import models as _families_models  # noqa: F401
 from app.modules.inventory import models as _inventory_models  # noqa: F401
 
 
@@ -31,6 +33,7 @@ app.add_middleware(
 )
 
 app.include_router(inventory_router)
+app.include_router(families_router)
 
 
 @app.get("/health", tags=["system"])

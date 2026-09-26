@@ -1,0 +1,99 @@
+import uuid
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_db
+from app.modules.families import schemas, service
+
+router = APIRouter(prefix="/api", tags=["families"])
+
+
+# ─── Families ───
+@router.get("/families", response_model=list[schemas.FamilyRead])
+async def list_families(
+    site: str | None = Query(None, pattern="^(reus|tarragona)$"),
+    active: bool | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    return await service.list_families(db, site, active)
+
+
+@router.post(
+    "/families",
+    response_model=schemas.FamilyRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_family(
+    payload: schemas.FamilyCreate, db: AsyncSession = Depends(get_db)
+):
+    try:
+        return await service.create_family(db, payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/families/{family_id}", response_model=schemas.FamilyRead)
+async def get_family(family_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    family = await service.get_family(db, family_id)
+    if family is None:
+        raise HTTPException(status_code=404, detail="Familia no encontrada")
+    return family
+
+
+@router.patch("/families/{family_id}", response_model=schemas.FamilyRead)
+async def update_family(
+    family_id: uuid.UUID,
+    payload: schemas.FamilyUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    family = await service.update_family(db, family_id, payload)
+    if family is None:
+        raise HTTPException(status_code=404, detail="Familia no encontrada")
+    return family
+
+
+@router.get("/families-summary", response_model=schemas.FamilySummary)
+async def family_summary(db: AsyncSession = Depends(get_db)):
+    return await service.get_family_summary(db)
+
+
+# ─── Deliveries ───
+@router.get("/deliveries", response_model=list[schemas.DeliveryRead])
+async def list_deliveries(
+    site: str | None = Query(None, pattern="^(reus|tarragona)$"),
+    target_date: date | None = Query(None, alias="date"),
+    status_filter: str | None = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db),
+):
+    return await service.list_deliveries(db, site, target_date, status_filter)
+
+
+@router.post(
+    "/deliveries",
+    response_model=schemas.DeliveryRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_delivery(
+    payload: schemas.DeliveryCreate, db: AsyncSession = Depends(get_db)
+):
+    try:
+        return await service.create_delivery(db, payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.patch("/deliveries/{delivery_id}/check-in", response_model=schemas.DeliveryRead)
+async def check_in(
+    delivery_id: uuid.UUID,
+    payload: schemas.DeliveryCheckIn,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        delivery = await service.check_in_delivery(db, delivery_id, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    return delivery
