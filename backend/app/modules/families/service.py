@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.families import models, schemas
 
 
-# ─── Families ───
 async def list_families(
     db: AsyncSession,
     site: str | None = None,
@@ -47,7 +46,6 @@ async def update_family(
     return family
 
 
-# ─── Deliveries ───
 async def list_deliveries(
     db: AsyncSession,
     site: str | None = None,
@@ -55,11 +53,11 @@ async def list_deliveries(
     status: str | None = None,
 ) -> list[models.Delivery]:
     stmt = select(models.Delivery).order_by(models.Delivery.delivery_date)
-    if site is not None:
+    if site:
         stmt = stmt.where(models.Delivery.site == site)
-    if target_date is not None:
+    if target_date:
         stmt = stmt.where(models.Delivery.delivery_date == target_date)
-    if status is not None:
+    if status:
         stmt = stmt.where(models.Delivery.status == status)
     result = await db.execute(stmt)
     return list(result.scalars().all())

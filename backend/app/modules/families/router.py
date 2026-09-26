@@ -63,7 +63,7 @@ async def family_summary(db: AsyncSession = Depends(get_db)):
 @router.get("/deliveries", response_model=list[schemas.DeliveryRead])
 async def list_deliveries(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
-    target_date: date | None = Query(None, alias="date"),
+        target_date: date | None = Query(None),
     status_filter: str | None = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
 ):

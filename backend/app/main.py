@@ -9,7 +9,8 @@ from app.db.session import engine
 from app.modules.families.router import router as families_router
 from app.modules.inventory.router import router as inventory_router
 
-# importar modelos para que Base los conozca antes de create_all
+# importar modelos ANTES de create_all para que Base los conozca
+from app.modules.users import models as _users_models  # noqa: F401
 from app.modules.families import models as _families_models  # noqa: F401
 from app.modules.inventory import models as _inventory_models  # noqa: F401
 
