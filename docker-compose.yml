@@ -51,8 +51,7 @@ services:
     restart: unless-stopped
     ports:
       - "3100:3000"
-    volumes:
-      - ./frontend/src:/app/src
+    
     depends_on:
       - xama-api
     networks: [xama]
