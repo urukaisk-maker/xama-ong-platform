@@ -5,11 +5,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.db.base import Base
-from app.db.session import engine
+from app.db.session import SessionLocal, engine
+from app.modules.auth.router import router as auth_router
+from app.modules.auth.service import ensure_default_admin
 from app.modules.families.router import router as families_router
 from app.modules.inventory.router import router as inventory_router
 
-# importar modelos ANTES de create_all para que Base los conozca
+# importar modelos ANTES de create_all
 from app.modules.users import models as _users_models  # noqa: F401
 from app.modules.families import models as _families_models  # noqa: F401
 from app.modules.inventory import models as _inventory_models  # noqa: F401
@@ -19,6 +21,8 @@ from app.modules.inventory import models as _inventory_models  # noqa: F401
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    async with SessionLocal() as db:
+        await ensure_default_admin(db)
     yield
     await engine.dispose()
 
@@ -33,6 +37,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
 app.include_router(inventory_router)
 app.include_router(families_router)
 
