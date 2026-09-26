@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.modules.inventory import models, schemas
 
 
-# ─── Products ───
 async def list_products(db: AsyncSession) -> list[models.Product]:
     result = await db.execute(select(models.Product).order_by(models.Product.name))
     return list(result.scalars().all())
@@ -20,11 +19,9 @@ async def create_product(
     product = models.Product(**data.model_dump())
     db.add(product)
     await db.commit()
-    await db.refresh(product)
     return product
 
 
-# ─── Batches ───
 async def list_batches(db: AsyncSession) -> list[models.Batch]:
     result = await db.execute(
         select(models.Batch).order_by(models.Batch.expiry_date.asc())
@@ -36,7 +33,6 @@ async def create_batch(db: AsyncSession, data: schemas.BatchCreate) -> models.Ba
     batch = models.Batch(**data.model_dump())
     db.add(batch)
     await db.commit()
-    await db.refresh(batch)
     return batch
 
 
@@ -67,11 +63,9 @@ async def consume_batch(
     if batch.quantity == 0:
         batch.status = "agotado"
     await db.commit()
-    await db.refresh(batch)
     return batch
 
 
-# ─── Summary ───
 async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySummary:
     total_products = await db.scalar(select(func.count(models.Product.id))) or 0
     total_batches = await db.scalar(select(func.count(models.Batch.id))) or 0
