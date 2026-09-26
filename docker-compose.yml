@@ -9,11 +9,9 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-        volumes:
-      - ./backend/app:/app/app
-      - ./backend/alembic:/app/alembic
+    volumes:
+      - xama_pgdata:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-            
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
@@ -36,11 +34,14 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@xama-db:5432/${POSTGRES_DB}
       REDIS_URL: redis://xama-cache:6379
       SECRET_KEY: ${SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
       ENVIRONMENT: development
     ports:
       - "8100:8000"
     volumes:
       - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
     depends_on:
       xama-db:
         condition: service_healthy
@@ -49,11 +50,12 @@ services:
   xama-web:
     build:
       context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8100
     container_name: xama-web
     restart: unless-stopped
     ports:
       - "3100:3000"
-    
     depends_on:
       - xama-api
     networks: [xama]
