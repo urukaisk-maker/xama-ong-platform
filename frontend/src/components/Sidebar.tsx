@@ -9,6 +9,7 @@ const links = [
   { href: "/inventory", label: "Inventario" },
   { href: "/families", label: "Familias" },
   { href: "/deliveries", label: "Entregas" },
+  { href: "/nevera", label: "Nevera Solidària" },
   { href: "/shifts", label: "Cuadrantes" },
   { href: "/volunteers", label: "Voluntarios" },
 ];

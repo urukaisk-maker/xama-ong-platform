@@ -104,3 +104,58 @@ export type HoursSummary = {
   total_shifts_assigned: number;
   ranking: VolunteerHours[];
 };
+
+export type Ration = {
+  id: string;
+  date: string;
+  target_rations: number;
+  served_rations: number;
+  notes: string | null;
+  created_at: string;
+};
+
+export type RationSummary = {
+  total_days: number;
+  total_served: number;
+  avg_served: number;
+  target_total: number;
+  compliance_pct: number;
+};
+
+export type Derivation = {
+  id: string;
+  reference_code: string;
+  person_name: string | null;
+  origin: string;
+  reason: string | null;
+  rations: number;
+  notes: string | null;
+  status: string;
+  served_at: string | null;
+  created_at: string;
+};
+
+export type ImpactMetrics = {
+  total_products: number;
+  total_batches: number;
+  total_kg_recovered: number;
+  expiring_soon_kg: number;
+  total_families: number;
+  active_families: number;
+  total_people: number;
+  reus_families: number;
+  tarragona_families: number;
+  total_deliveries: number;
+  deliveries_done: number;
+  deliveries_pending: number;
+  nevera_served: number;
+  nevera_target: number;
+  nevera_compliance_pct: number;
+  derivations_total: number;
+  derivations_served: number;
+  total_volunteers: number;
+  total_volunteer_hours: number;
+  total_shifts: number;
+  co2_avoided_kg: number;
+  generated_at: string;
+};
