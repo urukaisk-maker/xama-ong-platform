@@ -50,12 +50,18 @@ services:
   xama-web:
     build:
       context: ./frontend
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:8100
     container_name: xama-web
     restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8100
     ports:
       - "3100:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/next.config.js:/app/next.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
     depends_on:
       - xama-api
     networks: [xama]
