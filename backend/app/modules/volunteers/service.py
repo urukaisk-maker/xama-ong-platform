@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -9,7 +9,6 @@ from app.modules.users.models import User
 from app.modules.volunteers import models, schemas
 
 
-# ─── Shifts ───
 async def list_shifts(
     db: AsyncSession,
     site: str | None = None,
@@ -73,7 +72,6 @@ async def delete_shift(db: AsyncSession, shift_id: uuid.UUID) -> bool:
     return True
 
 
-# ─── Assignments ───
 async def assign_to_shift(
     db: AsyncSession,
     shift_id: uuid.UUID,
@@ -87,7 +85,6 @@ async def assign_to_shift(
     if len(shift.assignments) >= shift.capacity:
         raise ValueError("El turno ya está completo")
 
-    # evitar duplicado explícito (por si el UNIQUE no está)
     existing = next(
         (a for a in shift.assignments if a.user_id == user_id), None
     )
@@ -136,7 +133,6 @@ async def mark_attendance(
     return assignment
 
 
-# ─── Hours / Gamification ───
 async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHours:
     user = await db.get(User, user_id)
     if user is None:
@@ -174,6 +170,9 @@ async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHou
 async def hours_summary(
     db: AsyncSession, limit: int = 20
 ) -> schemas.HoursSummary:
+    attended_case = case(
+        (models.ShiftAssignment.attended.is_(True), 1), else_=0
+    )
     stmt = (
         select(
             User.id,
@@ -182,12 +181,7 @@ async def hours_summary(
                 "total_hours"
             ),
             func.count(models.ShiftAssignment.id).label("total_shifts"),
-            func.coalesce(
-                func.sum(
-                    func.cast(models.ShiftAssignment.attended, Integer)
-                ),
-                0,
-            ).label("attended_shifts"),
+            func.coalesce(func.sum(attended_case), 0).label("attended_shifts"),
         )
         .join(
             models.ShiftAssignment,
@@ -195,7 +189,9 @@ async def hours_summary(
             isouter=True,
         )
         .group_by(User.id, User.full_name)
-        .order_by(func.coalesce(func.sum(models.ShiftAssignment.hours), 0).desc())
+        .order_by(
+            func.coalesce(func.sum(models.ShiftAssignment.hours), 0).desc()
+        )
         .limit(limit)
     )
     result = await db.execute(stmt)
