@@ -40,9 +40,12 @@ CREATE TABLE batches (
 CREATE TABLE families (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     reference_code VARCHAR(50) UNIQUE NOT NULL,
-    adults INTEGER DEFAULT 0,
-    minors INTEGER DEFAULT 0,
+    address TEXT,
+    phone VARCHAR(20),
+    adults INTEGER DEFAULT 0 CHECK (adults >= 0),
+    minors INTEGER DEFAULT 0 CHECK (minors >= 0),
     dietary_restrictions TEXT,
+    notes TEXT,
     site VARCHAR(50),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -52,8 +55,11 @@ CREATE TABLE deliveries (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     family_id UUID REFERENCES families(id) ON DELETE CASCADE,
     delivery_date DATE NOT NULL,
-    site VARCHAR(50),
+    site VARCHAR(50) NOT NULL,
+    volunteer_id UUID REFERENCES users(id),
     status VARCHAR(20) DEFAULT 'pendiente',
+    notes TEXT,
+    checked_in_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
