@@ -9,9 +9,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - xama_pgdata:/var/lib/postgresql/data
+        volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+            
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
