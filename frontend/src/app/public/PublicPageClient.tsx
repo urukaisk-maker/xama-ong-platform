@@ -252,4 +252,4 @@ function ImpactCard({ amount, desc }: { amount: string; desc: string }) {
   );
 }
 
-export { SectionDonar, Footer };
+
