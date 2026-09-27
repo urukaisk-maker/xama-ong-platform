@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import Button from "@/components/ui/Button";
-import { LoadingState } from "@/components/ui/Loading";
+import { SkeletonTable } from "@/components/ui/Loading";
 import { api, downloadFile, getToken } from "@/lib/api";
 import type { Family } from "@/lib/types";
 
@@ -129,8 +129,8 @@ export default function FamiliesPage() {
         />
       )}
 
-      {loading ? (
-        <LoadingState label="Cargando familias…" />
+            {loading ? (
+        <SkeletonTable rows={8} cols={canImport ? 8 : 7} />
       ) : families.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-3 flex justify-center">

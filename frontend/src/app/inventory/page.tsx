@@ -8,7 +8,7 @@ import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
 import Surface from "@/components/ui/Surface";
-import { LoadingState } from "@/components/ui/Loading";
+import { SkeletonTable } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 import { getCategoryIcon } from "@/lib/category-icons";
 import {
@@ -97,11 +97,9 @@ export default function InventoryPage() {
         />
       )}
 
-      {loading ? (
-        <LoadingState label="Cargando inventario…" />
+            {loading ? (
+        <SkeletonTable rows={8} cols={canDelete ? 6 : 5} />
       ) : batches.length === 0 ? (
-        <EmptyState />
-      ) : (
         <Surface hover={false} className="overflow-hidden">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200/60 bg-slate-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800/60 dark:bg-slate-800/40 dark:text-slate-400">

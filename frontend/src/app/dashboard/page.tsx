@@ -5,7 +5,7 @@ import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import Button from "@/components/ui/Button";
 import Surface from "@/components/ui/Surface";
-import { LoadingState } from "@/components/ui/Loading";
+import { LoadingState, SkeletonDashboard } from "@/components/ui/Loading";
 import { api, downloadFile } from "@/lib/api";
 import type { ImpactMetrics } from "@/lib/types";
 import { toast } from "sonner";
@@ -98,8 +98,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {loading ? (
-        <LoadingState label="Cargando métricas…" />
+            {loading ? (
+        <SkeletonDashboard />
       ) : !m ? (
         <p className="text-rose-600">No se pudieron cargar las métricas</p>
       ) : (

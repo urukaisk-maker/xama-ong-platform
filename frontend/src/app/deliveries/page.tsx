@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import Button from "@/components/ui/Button";
-import { LoadingState } from "@/components/ui/Loading";
+import { SkeletonCardGrid } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 import type { Delivery, Family } from "@/lib/types";
 
@@ -131,8 +131,8 @@ export default function DeliveriesPage() {
         />
       </div>
 
-      {loading ? (
-        <LoadingState label="Cargando entregas…" />
+            {loading ? (
+        <SkeletonCardGrid count={6} />
       ) : deliveries.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <div className="mb-3 flex justify-center">
