@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
@@ -26,7 +26,7 @@ async def impact(
 
 @router.get("/monthly", response_model=schemas.MonthlySeries)
 async def monthly(
-    year: int = Query(default_factory=lambda: datetime.now(timezone.utc).year),
+    year: int = Query(default_factory=lambda: datetime.now(UTC).year),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(require_role(*REPORT_ROLES)),
 ):
@@ -35,7 +35,7 @@ async def monthly(
 
 @router.get("/export.csv")
 async def export_csv(
-    year: int = Query(default_factory=lambda: datetime.now(timezone.utc).year),
+    year: int = Query(default_factory=lambda: datetime.now(UTC).year),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(require_role(*REPORT_ROLES)),
 ):
@@ -52,7 +52,7 @@ async def export_csv(
 
 @router.get("/report.pdf")
 async def export_pdf(
-    year: int = Query(default_factory=lambda: datetime.now(timezone.utc).year),
+    year: int = Query(default_factory=lambda: datetime.now(UTC).year),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(require_role(*REPORT_ROLES)),
 ):

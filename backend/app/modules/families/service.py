@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,7 +83,7 @@ async def check_in_delivery(
     if delivery.status == "entregada":
         raise ValueError("La entrega ya estaba marcada como entregada")
     delivery.status = "entregada"
-    delivery.checked_in_at = datetime.now(timezone.utc)
+    delivery.checked_in_at = datetime.now(UTC)
     if payload.volunteer_id is not None:
         delivery.volunteer_id = payload.volunteer_id
     if payload.notes is not None:

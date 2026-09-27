@@ -1,9 +1,7 @@
-import asyncio
 import os
 import uuid
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import (
@@ -24,15 +22,14 @@ from app.db.base import Base  # noqa: E402
 from app.db.session import get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.modules.auth.service import ensure_default_admin  # noqa: E402
-from app.modules.users.models import Role  # noqa: E402
+from app.modules.families import models as _families_models  # noqa: E402,F401
+from app.modules.inventory import models as _inventory_models  # noqa: E402,F401
+from app.modules.nevera import models as _nevera_models  # noqa: E402,F401
 
 # importar todos los modelos para que Base los conozca
 from app.modules.users import models as _users_models  # noqa: E402,F401
-from app.modules.families import models as _families_models  # noqa: E402,F401
-from app.modules.inventory import models as _inventory_models  # noqa: E402,F401
+from app.modules.users.models import Role  # noqa: E402
 from app.modules.volunteers import models as _volunteers_models  # noqa: E402,F401
-from app.modules.nevera import models as _nevera_models  # noqa: E402,F401
-
 
 # Engine único compartido para todos los tests
 _test_engine = create_async_engine(

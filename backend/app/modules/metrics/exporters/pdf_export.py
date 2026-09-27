@@ -1,9 +1,9 @@
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     Paragraph,
@@ -12,7 +12,6 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-
 
 MONTH_NAMES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -65,7 +64,7 @@ def build_pdf(data: dict) -> bytes:
     story.append(Spacer(1, 0.5 * cm))
     story.append(
         Paragraph(
-            f"Generado el {datetime.now(timezone.utc).strftime('%d/%m/%Y a las %H:%M UTC')}",
+            f"Generado el {datetime.now(UTC).strftime('%d/%m/%Y a las %H:%M UTC')}",
             small,
         )
     )

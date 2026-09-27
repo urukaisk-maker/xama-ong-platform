@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -121,7 +121,7 @@ async def serve_derivation(
     if derivation.status == "servida":
         raise ValueError("La derivación ya estaba marcada como servida")
     derivation.status = "servida"
-    derivation.served_at = datetime.now(timezone.utc)
+    derivation.served_at = datetime.now(UTC)
     await db.commit()
     await db.refresh(derivation)
     return derivation

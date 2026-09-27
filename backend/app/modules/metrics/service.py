@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ async def get_impact(db: AsyncSession) -> schemas.ImpactMetrics:
         select(func.coalesce(func.sum(Batch.quantity), 0))
     ) or 0
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     expiring_kg = await db.scalar(
         select(func.coalesce(func.sum(Batch.quantity), 0)).where(
             Batch.expiry_date <= today,
@@ -95,7 +95,7 @@ async def get_impact(db: AsyncSession) -> schemas.ImpactMetrics:
         total_volunteer_hours=float(total_hours),
         total_shifts=int(total_shifts),
         co2_avoided_kg=round(co2, 1),
-        generated_at=datetime.now(timezone.utc).isoformat(),
+        generated_at=datetime.now(UTC).isoformat(),
     )
 
 

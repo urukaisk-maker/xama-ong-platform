@@ -1,7 +1,6 @@
 import csv
 import io
-from datetime import datetime, timezone
-
+from datetime import UTC, datetime
 
 MONTH_NAMES = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -21,7 +20,7 @@ def build_csv(data: dict) -> str:
     # Cabecera
     w.writerow(["XAMA-ONG — Informe anual"])
     w.writerow(["Año", year])
-    w.writerow(["Generado", datetime.now(timezone.utc).isoformat()])
+    w.writerow(["Generado", datetime.now(UTC).isoformat()])
     w.writerow([])
 
     # Resumen ejecutivo
