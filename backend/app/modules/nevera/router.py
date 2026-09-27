@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.modules.audit.service import log_action
 from app.modules.auth.dependencies import get_current_user, require_role
 from app.modules.nevera import schemas, service
 from app.modules.users.models import User
@@ -50,6 +51,27 @@ async def update_ration(
     return ration
 
 
+@router.delete("/rations/{ration_id}", status_code=204)
+async def delete_ration_endpoint(
+    ration_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    ration = await service.delete_ration(db, ration_id)
+    if ration is None:
+        raise HTTPException(status_code=404, detail="Ración no encontrada")
+    await log_action(
+        db,
+        user,
+        action="delete",
+        resource_type="nevera_ration",
+        resource_id=str(ration_id),
+        description=f"Ración borrada ({ration.date})",
+    )
+    await db.commit()
+    return None
+
+
 @router.get("/rations/summary", response_model=schemas.RationSummary)
 async def ration_summary(
     from_date: date | None = Query(None),
@@ -85,48 +107,6 @@ async def create_derivation(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.patch(
-    "/derivations/{derivation_id}/serve",
-    response_model=schemas.DerivationRead,
-)
-async def serve_derivation(
-    derivation_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _user: User = Depends(require_role(*COORD_ROLES, "voluntario")),
-):
-    try:
-        derivation = await service.serve_derivation(db, derivation_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    if derivation is None:
-        raise HTTPException(status_code=404, detail="Derivación no encontrada")
-    return derivation
-
-
-from app.modules.audit.service import log_action  # noqa: E402
-
-
-@router.delete("/rations/{ration_id}", status_code=204)
-async def delete_ration_endpoint(
-    ration_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role(*COORD_ROLES)),
-):
-    ration = await service.delete_ration(db, ration_id)
-    if ration is None:
-        raise HTTPException(status_code=404, detail="Ración no encontrada")
-    await log_action(
-        db,
-        user,
-        action="delete",
-        resource_type="nevera_ration",
-        resource_id=str(ration_id),
-        description=f"Ración borrada ({ration.date})",
-    )
-    await db.commit()
-    return None
-
-
 @router.delete("/derivations/{derivation_id}", status_code=204)
 async def delete_derivation_endpoint(
     derivation_id: uuid.UUID,
@@ -148,3 +128,21 @@ async def delete_derivation_endpoint(
     )
     await db.commit()
     return None
+
+
+@router.patch(
+    "/derivations/{derivation_id}/serve",
+    response_model=schemas.DerivationRead,
+)
+async def serve_derivation(
+    derivation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role(*COORD_ROLES, "voluntario")),
+):
+    try:
+        derivation = await service.serve_derivation(db, derivation_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    if derivation is None:
+        raise HTTPException(status_code=404, detail="Derivación no encontrada")
+    return derivation

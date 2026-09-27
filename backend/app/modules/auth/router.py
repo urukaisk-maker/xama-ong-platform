@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token
 from app.db.session import get_db
+from app.modules.audit.service import log_action
 from app.modules.auth import schemas, service
 from app.modules.auth.dependencies import get_current_user, require_role
 from app.modules.users.models import User
@@ -89,26 +90,6 @@ async def update_user_endpoint(
     return user
 
 
-# Endpoint legado para compatibilidad
-@router.post(
-    "/register",
-    response_model=schemas.UserRead,
-    status_code=status.HTTP_201_CREATED,
-)
-async def register(
-    payload: schemas.UserCreate,
-    db: AsyncSession = Depends(get_db),
-    _admin: User = Depends(require_role("junta")),
-):
-    existing = await service.get_user_by_email(db, payload.email)
-    if existing is not None:
-        raise HTTPException(status_code=400, detail="Email ya registrado")
-    return await service.create_user(db, payload)
-
-
-from app.modules.audit.service import log_action  # noqa: E402
-
-
 @router.delete("/users/{user_id}", status_code=204)
 async def delete_user_endpoint(
     user_id: uuid.UUID,
@@ -131,3 +112,19 @@ async def delete_user_endpoint(
     )
     await db.commit()
     return None
+
+
+@router.post(
+    "/register",
+    response_model=schemas.UserRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register(
+    payload: schemas.UserCreate,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("junta")),
+):
+    existing = await service.get_user_by_email(db, payload.email)
+    if existing is not None:
+        raise HTTPException(status_code=400, detail="Email ya registrado")
+    return await service.create_user(db, payload)

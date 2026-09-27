@@ -2,12 +2,18 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.modules.audit.service import log_action
+from app.modules.auth.dependencies import get_current_user, require_role
 from app.modules.families import schemas, service
+from app.modules.users.models import User
 
 router = APIRouter(prefix="/api", tags=["families"])
+
+COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
 
 
 @router.get("/families", response_model=list[schemas.FamilyRead])
@@ -53,6 +59,29 @@ async def update_family(
     return family
 
 
+@router.delete("/families/{family_id}", status_code=204)
+async def delete_family_endpoint(
+    family_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    family, status_val = await service.delete_family(db, family_id)
+    if family is None:
+        raise HTTPException(status_code=404, detail="Familia no encontrada")
+    action = "soft_delete" if status_val == "soft" else "delete"
+    await log_action(
+        db,
+        user,
+        action=action,
+        resource_type="family",
+        resource_id=str(family_id),
+        description=f"Familia {family.reference_code} "
+        + ("desactivada (tenía entregas)" if status_val == "soft" else "borrada"),
+    )
+    await db.commit()
+    return None
+
+
 @router.get("/families-summary", response_model=schemas.FamilySummary)
 async def family_summary(db: AsyncSession = Depends(get_db)):
     return await service.get_family_summary(db)
@@ -82,6 +111,27 @@ async def create_delivery(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@router.delete("/deliveries/{delivery_id}", status_code=204)
+async def delete_delivery_endpoint(
+    delivery_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    delivery = await service.delete_delivery(db, delivery_id)
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    await log_action(
+        db,
+        user,
+        action="delete",
+        resource_type="delivery",
+        resource_id=str(delivery_id),
+        description=f"Entrega borrada ({delivery.delivery_date})",
+    )
+    await db.commit()
+    return None
+
+
 @router.patch("/deliveries/{delivery_id}/check-in", response_model=schemas.DeliveryRead)
 async def check_in(
     delivery_id: uuid.UUID,
@@ -95,14 +145,6 @@ async def check_in(
     if delivery is None:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     return delivery
-
-
-# ─── Import CSV ───
-from fastapi import File, UploadFile  # noqa: E402
-from app.modules.auth.dependencies import get_current_user, require_role  # noqa: E402
-from app.modules.users.models import User  # noqa: E402
-
-COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
 
 
 @router.post("/families/import/preview", response_model=schemas.ImportPreview)
@@ -147,50 +189,3 @@ async def families_template(
             "Content-Disposition": 'attachment; filename="xama-familias-plantilla.csv"'
         },
     )
-
-
-from app.modules.audit.service import log_action  # noqa: E402
-
-
-@router.delete("/families/{family_id}", status_code=204)
-async def delete_family_endpoint(
-    family_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role(*COORD_ROLES)),
-):
-    family, status = await service.delete_family(db, family_id)
-    if family is None:
-        raise HTTPException(status_code=404, detail="Familia no encontrada")
-    action = "soft_delete" if status == "soft" else "delete"
-    await log_action(
-        db,
-        user,
-        action=action,
-        resource_type="family",
-        resource_id=str(family_id),
-        description=f"Familia {family.reference_code} "
-        + ("desactivada (tenía entregas)" if status == "soft" else "borrada"),
-    )
-    await db.commit()
-    return None
-
-
-@router.delete("/deliveries/{delivery_id}", status_code=204)
-async def delete_delivery_endpoint(
-    delivery_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(require_role(*COORD_ROLES)),
-):
-    delivery = await service.delete_delivery(db, delivery_id)
-    if delivery is None:
-        raise HTTPException(status_code=404, detail="Entrega no encontrada")
-    await log_action(
-        db,
-        user,
-        action="delete",
-        resource_type="delivery",
-        resource_id=str(delivery_id),
-        description=f"Entrega borrada ({delivery.delivery_date})",
-    )
-    await db.commit()
-    return None
