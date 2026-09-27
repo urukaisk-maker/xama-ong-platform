@@ -7,7 +7,7 @@ import { SITE_CONFIG } from "@/lib/site-config";
 
 const { ong, developer } = SITE_CONFIG;
 
-function SectionDonar() {
+export function SectionDonar() {
   return (
     <section
       id="donar"
@@ -100,7 +100,7 @@ function SectionDonar() {
   );
 }
 
-function Footer() {
+export function Footer() {
   const [devOpen, setDevOpen] = useState(false);
 
   return (
@@ -252,4 +252,4 @@ function ImpactCard({ amount, desc }: { amount: string; desc: string }) {
   );
 }
 
-export default { SectionDonar, Footer };
+export { SectionDonar, Footer };

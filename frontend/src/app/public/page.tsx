@@ -9,7 +9,7 @@ import {
 import DeveloperModal from "@/components/DeveloperModal";
 import IconByName from "@/components/IconByName";
 import PublicStats from "@/components/PublicStats";
-import PublicPageClient from "./PublicPageClient";
+import { SectionDonar, Footer } from "./PublicPageClient";
 import { SITE_CONFIG } from "@/lib/site-config";
 
 const { ong, testimonials, pillars, companyBenefits } = SITE_CONFIG;
@@ -116,7 +116,7 @@ export default function PublicPage() {
       </section>
 
       {/* ─── DONAR (parte cliente) ─── */}
-      <PublicPageClient.SectionDonar />
+      <SectionDonar />
 
       {/* ─── VOLUNTARIADO ─── */}
       <section
@@ -306,7 +306,7 @@ export default function PublicPage() {
       </section>
 
       {/* ─── Footer (cliente para el modal) ─── */}
-      <PublicPageClient.Footer />
+      <Footer />
     </main>
   );
 }
