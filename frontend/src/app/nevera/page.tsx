@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import { useUser } from "@/components/AuthGuard";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import { api } from "@/lib/api";
 import type { Derivation, Ration, RationSummary } from "@/lib/types";
+
+const COORD_ROLES = ["junta", "coordinador_reus", "coordinador_tarragona"];
 
 export default function NeveraPage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -23,6 +27,10 @@ export default function NeveraPage() {
     rations: 1,
   });
   const [derivErr, setDerivErr] = useState<string | null>(null);
+
+  const { user } = useUser();
+  const canDelete =
+    user?.role_name != null && COORD_ROLES.includes(user.role_name);
 
   const load = async () => {
     setLoading(true);
@@ -82,6 +90,16 @@ export default function NeveraPage() {
     } catch (e) {
       alert(e instanceof Error ? e.message : "Error");
     }
+  };
+
+  const deleteRation = async (id: string) => {
+    await api(`/api/nevera/rations/${id}`, { method: "DELETE" });
+    load();
+  };
+
+  const deleteDerivation = async (id: string) => {
+    await api(`/api/nevera/derivations/${id}`, { method: "DELETE" });
+    load();
   };
 
   const inputCls =
@@ -240,6 +258,7 @@ export default function NeveraPage() {
                 <th className="px-4 py-3">Objetivo</th>
                 <th className="px-4 py-3">Servidas</th>
                 <th className="px-4 py-3">Cumplimiento</th>
+                {canDelete && <th className="px-4 py-3"></th>}
               </tr>
             </thead>
             <tbody className="dark:text-slate-200">
@@ -264,13 +283,23 @@ export default function NeveraPage() {
                         {pct.toFixed(0)}%
                       </span>
                     </td>
+                    {canDelete && (
+                      <td className="px-4 py-3 text-right">
+                        <ConfirmDelete
+                          title="¿Borrar esta ración?"
+                          message={`Ración del ${r.date}: ${r.served_rations}/${r.target_rations}. Esta acción no se puede deshacer.`}
+                          onConfirm={() => deleteRation(r.id)}
+                          trigger={TrashIcon}
+                        />
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {rations.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={canDelete ? 5 : 4}
                     className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                   >
                     Sin registros
@@ -324,14 +353,24 @@ export default function NeveraPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {d.status !== "servida" && (
-                      <button
-                        onClick={() => serve(d.id)}
-                        className="rounded-md bg-emerald-600 px-3 py-1 text-xs text-white hover:bg-emerald-700"
-                      >
-                        Servir
-                      </button>
-                    )}
+                    <div className="flex items-center justify-end gap-1">
+                      {d.status !== "servida" && (
+                        <button
+                          onClick={() => serve(d.id)}
+                          className="rounded-md bg-emerald-600 px-3 py-1 text-xs text-white hover:bg-emerald-700"
+                        >
+                          Servir
+                        </button>
+                      )}
+                      {canDelete && d.status !== "servida" && (
+                        <ConfirmDelete
+                          title="¿Borrar esta derivación?"
+                          message={`${d.reference_code} · ${d.rations} ración(es). Solo se pueden borrar derivaciones pendientes.`}
+                          onConfirm={() => deleteDerivation(d.id)}
+                          trigger={TrashIcon}
+                        />
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

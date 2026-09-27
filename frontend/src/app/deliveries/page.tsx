@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import { useUser } from "@/components/AuthGuard";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import { api } from "@/lib/api";
 import type { Delivery, Family } from "@/lib/types";
+
+const COORD_ROLES = ["junta", "coordinador_reus", "coordinador_tarragona"];
 
 export default function DeliveriesPage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -12,6 +16,10 @@ export default function DeliveriesPage() {
   const [families, setFamilies] = useState<Family[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  const { user } = useUser();
+  const canDelete =
+    user?.role_name != null && COORD_ROLES.includes(user.role_name);
 
   const load = async () => {
     setLoading(true);
@@ -36,6 +44,11 @@ export default function DeliveriesPage() {
       method: "PATCH",
       body: JSON.stringify({ notes: "Entregada" }),
     });
+    load();
+  };
+
+  const deleteDelivery = async (id: string) => {
+    await api(`/api/deliveries/${id}`, { method: "DELETE" });
     load();
   };
 
@@ -92,13 +105,24 @@ export default function DeliveriesPage() {
           {deliveries.map((d) => (
             <div
               key={d.id}
-              className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${
+              className={`relative rounded-xl border bg-white p-4 dark:bg-slate-900 ${
                 d.status === "entregada"
                   ? "border-emerald-200 dark:border-emerald-800"
                   : "border-slate-200 dark:border-slate-800"
               }`}
             >
-              <div className="mb-2 flex items-start justify-between">
+              {canDelete && (
+                <div className="absolute right-2 top-2">
+                  <ConfirmDelete
+                    title="¿Borrar esta entrega?"
+                    message={`Entrega de ${familyName(d.family_id)} del ${d.delivery_date}. Esta acción no se puede deshacer.`}
+                    onConfirm={() => deleteDelivery(d.id)}
+                    trigger={TrashIcon}
+                  />
+                </div>
+              )}
+
+              <div className="mb-2 flex items-start justify-between pr-8">
                 <div>
                   <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
                     {d.id.slice(0, 8)}

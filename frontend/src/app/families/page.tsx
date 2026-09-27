@@ -1,4 +1,3 @@
-cat > ~/proyectos/xama-ong-platform/frontend/src/app/families/page.tsx <<'TSXEOF'
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
@@ -187,7 +186,6 @@ export default function FamiliesPage() {
   );
 }
 
-/* ─── Modal de importación CSV ─── */
 function ImportCSVModal({
   onImported,
   onClose,
@@ -471,7 +469,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/* ─── Formulario familia individual ─── */
 function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
   const [data, setData] = useState({
     reference_code: "",
@@ -588,4 +585,3 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
     </form>
   );
 }
-TSXEOF
