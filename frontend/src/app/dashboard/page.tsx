@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { FileSpreadsheet, FileText, FileDown } from "lucide-react";
+import { FileSpreadsheet, FileText } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import Button from "@/components/ui/Button";
+import Surface from "@/components/ui/Surface";
 import { LoadingState } from "@/components/ui/Loading";
 import { api, downloadFile } from "@/lib/api";
 import type { ImpactMetrics } from "@/lib/types";
@@ -57,7 +58,7 @@ export default function DashboardPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Dashboard
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -256,13 +257,15 @@ function Card({
     rose: "text-rose-600 dark:text-rose-400",
   };
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <Surface className="p-5">
       <p className="mb-1 text-sm text-slate-500 dark:text-slate-400">
         {icon && <span className="mr-1.5">{icon}</span>}
         {title}
       </p>
-      <p className={`text-2xl font-bold ${colors[accent]}`}>{value}</p>
-    </div>
+      <p className={`text-2xl font-semibold tracking-tight ${colors[accent]}`}>
+        {value}
+      </p>
+    </Surface>
   );
 }
 
@@ -285,15 +288,15 @@ function BigCard({
     amber: "text-amber-600 dark:text-amber-400",
   };
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <Surface className="p-6">
       <p className="mb-1 text-sm text-slate-500 dark:text-slate-400">
         {icon && <span className="mr-1.5">{icon}</span>}
         {title}
       </p>
-      <p className={`text-4xl font-bold ${colors[color]}`}>
+      <p className={`text-4xl font-semibold tracking-tight ${colors[color]}`}>
         {value}
         {unit && <span className="ml-1 text-lg font-medium">{unit}</span>}
       </p>
-    </div>
+    </Surface>
   );
 }
