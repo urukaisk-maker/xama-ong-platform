@@ -147,3 +147,50 @@ async def families_template(
             "Content-Disposition": 'attachment; filename="xama-familias-plantilla.csv"'
         },
     )
+
+
+from app.modules.audit.service import log_action  # noqa: E402
+
+
+@router.delete("/families/{family_id}", status_code=204)
+async def delete_family_endpoint(
+    family_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    family, status = await service.delete_family(db, family_id)
+    if family is None:
+        raise HTTPException(status_code=404, detail="Familia no encontrada")
+    action = "soft_delete" if status == "soft" else "delete"
+    await log_action(
+        db,
+        user,
+        action=action,
+        resource_type="family",
+        resource_id=str(family_id),
+        description=f"Familia {family.reference_code} "
+        + ("desactivada (tenía entregas)" if status == "soft" else "borrada"),
+    )
+    await db.commit()
+    return None
+
+
+@router.delete("/deliveries/{delivery_id}", status_code=204)
+async def delete_delivery_endpoint(
+    delivery_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    delivery = await service.delete_delivery(db, delivery_id)
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    await log_action(
+        db,
+        user,
+        action="delete",
+        resource_type="delivery",
+        resource_id=str(delivery_id),
+        description=f"Entrega borrada ({delivery.delivery_date})",
+    )
+    await db.commit()
+    return None

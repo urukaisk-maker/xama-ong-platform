@@ -125,3 +125,27 @@ async def serve_derivation(
     await db.commit()
     await db.refresh(derivation)
     return derivation
+
+
+async def delete_ration(
+    db: AsyncSession, ration_id: uuid.UUID
+) -> models.NeveraRation | None:
+    ration = await db.get(models.NeveraRation, ration_id)
+    if ration is None:
+        return None
+    await db.delete(ration)
+    await db.commit()
+    return ration
+
+
+async def delete_derivation(
+    db: AsyncSession, derivation_id: uuid.UUID
+) -> tuple[models.Derivation | None, str | None]:
+    derivation = await db.get(models.Derivation, derivation_id)
+    if derivation is None:
+        return None, None
+    if derivation.status == "servida":
+        return None, "No se puede borrar una derivación ya servida"
+    await db.delete(derivation)
+    await db.commit()
+    return derivation, None

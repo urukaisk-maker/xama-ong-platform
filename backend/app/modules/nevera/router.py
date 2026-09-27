@@ -101,3 +101,50 @@ async def serve_derivation(
     if derivation is None:
         raise HTTPException(status_code=404, detail="Derivación no encontrada")
     return derivation
+
+
+from app.modules.audit.service import log_action  # noqa: E402
+
+
+@router.delete("/rations/{ration_id}", status_code=204)
+async def delete_ration_endpoint(
+    ration_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    ration = await service.delete_ration(db, ration_id)
+    if ration is None:
+        raise HTTPException(status_code=404, detail="Ración no encontrada")
+    await log_action(
+        db,
+        user,
+        action="delete",
+        resource_type="nevera_ration",
+        resource_id=str(ration_id),
+        description=f"Ración borrada ({ration.date})",
+    )
+    await db.commit()
+    return None
+
+
+@router.delete("/derivations/{derivation_id}", status_code=204)
+async def delete_derivation_endpoint(
+    derivation_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES, "servicios_sociales")),
+):
+    derivation, error = await service.delete_derivation(db, derivation_id)
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    if derivation is None:
+        raise HTTPException(status_code=404, detail="Derivación no encontrada")
+    await log_action(
+        db,
+        user,
+        action="delete",
+        resource_type="derivation",
+        resource_id=str(derivation_id),
+        description=f"Derivación borrada: {derivation.reference_code}",
+    )
+    await db.commit()
+    return None

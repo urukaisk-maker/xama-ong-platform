@@ -20,7 +20,8 @@ from app.modules.families import models as _families_models  # noqa: F401
 from app.modules.inventory import models as _inventory_models  # noqa: F401
 from app.modules.volunteers import models as _volunteers_models  # noqa: F401
 from app.modules.nevera import models as _nevera_models  # noqa: F401
-
+modelos ANTES de create_all
+from app.m
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +31,7 @@ async def lifespan(app: FastAPI):
         await ensure_default_admin(db)
     yield
     await engine.dispose()
-
+app.include_router(audit_router)
 
 app = FastAPI(title="XAMA-ONG API", version="0.1.0", lifespan=lifespan)
 

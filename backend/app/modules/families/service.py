@@ -280,3 +280,39 @@ async def import_csv(
     await db.commit()
     preview["imported"] = imported
     return preview
+
+
+async def delete_family(
+    db: AsyncSession, family_id: uuid.UUID
+) -> tuple[models.Family | None, str | None]:
+    """Soft delete: marca active=False si tiene entregas."""
+    family = await db.get(models.Family, family_id)
+    if family is None:
+        return None, None
+
+    count = await db.scalar(
+        select(func.count(models.Delivery.id)).where(
+            models.Delivery.family_id == family_id
+        )
+    ) or 0
+
+    if count > 0:
+        # Soft delete
+        family.active = False
+        await db.commit()
+        return family, "soft"
+
+    await db.delete(family)
+    await db.commit()
+    return family, None
+
+
+async def delete_delivery(
+    db: AsyncSession, delivery_id: uuid.UUID
+) -> models.Delivery | None:
+    delivery = await db.get(models.Delivery, delivery_id)
+    if delivery is None:
+        return None
+    await db.delete(delivery)
+    await db.commit()
+    return delivery

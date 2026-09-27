@@ -104,3 +104,30 @@ async def register(
     if existing is not None:
         raise HTTPException(status_code=400, detail="Email ya registrado")
     return await service.create_user(db, payload)
+
+
+from app.modules.audit.service import log_action  # noqa: E402
+
+
+@router.delete("/users/{user_id}", status_code=204)
+async def delete_user_endpoint(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_role("junta")),
+):
+    user = await service.get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if user.id == admin.id:
+        raise HTTPException(status_code=400, detail="No puedes borrarte a ti mismo")
+    user.active = False
+    await log_action(
+        db,
+        admin,
+        action="deactivate",
+        resource_type="user",
+        resource_id=str(user_id),
+        description=f"Usuario {user.email} desactivado",
+    )
+    await db.commit()
+    return None

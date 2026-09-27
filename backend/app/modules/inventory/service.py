@@ -93,3 +93,34 @@ async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySumma
         expiring_soon_count=int(exp_count),
         expiring_soon_kg=float(exp_qty),
     )
+
+
+async def delete_batch(db: AsyncSession, batch_id: uuid.UUID) -> models.Batch | None:
+    batch = await db.get(models.Batch, batch_id)
+    if batch is None:
+        return None
+    await db.delete(batch)
+    await db.commit()
+    return batch
+
+
+async def delete_product(
+    db: AsyncSession, product_id: uuid.UUID
+) -> tuple[models.Product | None, str | None]:
+    """Devuelve (product, error). No borra si tiene lotes asociados."""
+    product = await db.get(models.Product, product_id)
+    if product is None:
+        return None, None
+
+    count = await db.scalar(
+        select(func.count(models.Batch.id)).where(
+            models.Batch.product_id == product_id
+        )
+    ) or 0
+
+    if count > 0:
+        return None, f"El producto tiene {count} lote(s) asociados"
+
+    await db.delete(product)
+    await db.commit()
+    return product, None
