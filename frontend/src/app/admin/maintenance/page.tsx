@@ -1,7 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 
 type Preview = {
@@ -64,6 +74,7 @@ export default function MaintenancePage() {
       setPreview(p);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Error");
+      toast.error("Error al calcular la vista previa");
     } finally {
       setLoading(false);
     }
@@ -91,9 +102,12 @@ export default function MaintenancePage() {
         }),
       });
       setResult(r);
+      toast.success(
+        `Limpieza completada: ${r.batches_deleted + r.deliveries_deleted + r.families_deactivated} elementos afectados`
+      );
       loadPreview();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Error");
     } finally {
       setExecuting(false);
     }
@@ -110,7 +124,12 @@ export default function MaintenancePage() {
   }
 
   const inputCls =
-    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+
+  const totalToDelete =
+    (preview?.batches_count ?? 0) +
+    (preview?.deliveries_count ?? 0) +
+    (preview?.families_count ?? 0);
 
   return (
     <AppShell>
@@ -130,13 +149,12 @@ export default function MaintenancePage() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Configuración */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
             Parámetros de limpieza
           </h2>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
                 Lotes caducados hace más de…
@@ -150,7 +168,7 @@ export default function MaintenancePage() {
                   onChange={(e) => setBatchesDays(Number(e.target.value))}
                   className={inputCls}
                 />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                   días
                 </span>
               </div>
@@ -169,7 +187,7 @@ export default function MaintenancePage() {
                   onChange={(e) => setDeliveriesDays(Number(e.target.value))}
                   className={inputCls}
                 />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                   días
                 </span>
               </div>
@@ -188,32 +206,31 @@ export default function MaintenancePage() {
                   onChange={(e) => setFamiliesMonths(Number(e.target.value))}
                   className={inputCls}
                 />
-                <span className="text-sm text-slate-500 dark:text-slate-400">
+                <span className="whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                   meses
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                onClick={loadPreview}
-                disabled={loading || executing}
-                className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              >
-                {loading ? "Calculando…" : "↻ Actualizar vista previa"}
-              </button>
-            </div>
+            <Button
+              variant="outline"
+              loading={loading}
+              icon={<RefreshCw className="h-4 w-4" />}
+              onClick={loadPreview}
+              className="w-full"
+            >
+              {loading ? "Calculando…" : "Actualizar vista previa"}
+            </Button>
           </div>
         </section>
 
-        {/* Vista previa */}
-        <section className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
             Vista previa
           </h2>
 
           {loading ? (
-            <p className="text-slate-500 dark:text-slate-400">Calculando…</p>
+            <LoadingState label="Calculando…" />
           ) : preview ? (
             <div className="space-y-3">
               <PreviewRow
@@ -232,24 +249,21 @@ export default function MaintenancePage() {
                 color="slate"
               />
 
-              <button
+              <Button
+                variant="danger"
+                loading={executing}
+                disabled={executing || totalToDelete === 0}
+                icon={<Trash2 className="h-4 w-4" />}
                 onClick={runCleanup}
-                disabled={
-                  executing ||
-                  (preview.batches_count === 0 &&
-                    preview.deliveries_count === 0 &&
-                    preview.families_count === 0)
-                }
-                className="mt-4 w-full rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+                className="mt-4 w-full"
               >
                 {executing ? "Ejecutando…" : "Ejecutar limpieza"}
-              </button>
+              </Button>
 
-              {(preview.batches_count > 0 ||
-                preview.deliveries_count > 0 ||
-                preview.families_count > 0) && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  ⚠️ Esta acción no se puede deshacer. La vista previa se
+              {totalToDelete > 0 && !result && (
+                <p className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
+                  Esta acción no se puede deshacer. La vista previa se
                   actualizará después de ejecutar.
                 </p>
               )}
@@ -266,14 +280,15 @@ export default function MaintenancePage() {
               <ul className="mt-2 ml-4 list-disc space-y-0.5">
                 <li>{result.batches_deleted} lotes borrados</li>
                 <li>{result.deliveries_deleted} entregas borradas</li>
-                <li>{result.families_deactivated} familias desactivadas</li>
+                <li>
+                  {result.families_deactivated} familias desactivadas
+                </li>
               </ul>
             </div>
           )}
         </section>
       </div>
 
-      {/* Detalle expandible */}
       {preview && preview.batches_count > 0 && (
         <DetailSection title="Lotes a borrar" count={preview.batches_count}>
           <table className="w-full text-xs">
@@ -369,17 +384,25 @@ function DetailSection({
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="mt-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <section className="mt-6 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between p-4 text-left"
+        className="flex w-full items-center justify-between p-4 text-left transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
       >
         <span className="text-sm font-semibold text-slate-900 dark:text-white">
           {title} ({count})
         </span>
-        <span className="text-slate-400">{open ? "▲" : "▼"}</span>
+        {open ? (
+          <ChevronUp className="h-4 w-4 text-slate-400" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        )}
       </button>
-      {open && <div className="border-t border-slate-100 p-4 dark:border-slate-800">{children}</div>}
+      {open && (
+        <div className="border-t border-slate-100 p-4 dark:border-slate-800">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
