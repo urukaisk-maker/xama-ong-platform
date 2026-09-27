@@ -1,23 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Package, AlertTriangle } from "lucide-react";
+import { Plus, Package } from "lucide-react";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import Surface from "@/components/ui/Surface";
 import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
+import { getCategoryIcon } from "@/lib/category-icons";
+import {
+  getExpiryInfo,
+  getProgressColor,
+  getProgressTrack,
+} from "@/lib/relative-date";
 import type { Batch, Product } from "@/lib/types";
 
 const COORD_ROLES = ["junta", "coordinador_reus", "coordinador_tarragona"];
-
-function daysUntil(dateStr: string): number {
-  const d = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
 
 export default function InventoryPage() {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -49,8 +50,8 @@ export default function InventoryPage() {
     load();
   }, []);
 
-  const productName = (id: string) =>
-    products.find((p) => p.id === id)?.name ?? "—";
+  const getProduct = (id: string) =>
+    products.find((p) => p.id === id) ?? null;
 
   const deleteBatch = async (id: string) => {
     await api(`/api/inventory/batches/${id}`, { method: "DELETE" });
@@ -58,11 +59,17 @@ export default function InventoryPage() {
     load();
   };
 
+  // Ordenar por caducidad ascendente (FeFo)
+  const sortedBatches = [...batches].sort(
+    (a, b) =>
+      new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()
+  );
+
   return (
     <AppShell>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Inventario
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -95,9 +102,9 @@ export default function InventoryPage() {
       ) : batches.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <Surface hover={false} className="overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <thead className="border-b border-slate-200/60 bg-slate-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800/60 dark:bg-slate-800/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Origen</th>
@@ -108,57 +115,86 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody className="dark:text-slate-200">
-              {batches.map((b) => {
-                const days = daysUntil(b.expiry_date);
-                const soon = days <= 7 && days >= 0;
-                const expired = days < 0;
+              {sortedBatches.map((b) => {
+                const product = getProduct(b.product_id);
+                const expiry = getExpiryInfo(b.expiry_date);
+                const icon = getCategoryIcon(product?.category);
+
                 return (
                   <tr
                     key={b.id}
-                    className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+                    className="border-t border-slate-100/60 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
                   >
-                    <td className="px-4 py-3 font-medium">
-                      {productName(b.product_id)}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg" aria-hidden>
+                          {icon}
+                        </span>
+                        <span className="font-medium">
+                          {product?.name ?? "—"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                       {b.origin.replace(/_/g, " ")}
                     </td>
-                    <td className="px-4 py-3 font-mono">{b.quantity}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
-                          expired
-                            ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
-                            : soon
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                            : "text-slate-600 dark:text-slate-400"
-                        }`}
-                      >
-                        {(expired || soon) && (
-                          <AlertTriangle className="h-3 w-3" />
-                        )}
-                        {b.expiry_date}{" "}
-                        <span className="opacity-70">
-                          ({days >= 0 ? `+${days}` : days} d)
-                        </span>
-                      </span>
+                    <td className="px-4 py-3 font-mono text-slate-900 dark:text-slate-100">
+                      {b.quantity}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
+                      <div className="min-w-[140px] space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {b.expiry_date}
+                          </span>
+                          <Badge
+                            variant={
+                              expiry.level === "expired"
+                                ? "danger"
+                                : expiry.level === "critical"
+                                ? "danger"
+                                : expiry.level === "warning"
+                                ? "warning"
+                                : "success"
+                            }
+                          >
+                            {expiry.label}
+                          </Badge>
+                        </div>
+                        {/* Barra de progreso FeFo */}
+                        <div
+                          className={`h-1 w-full overflow-hidden rounded-full ${getProgressTrack(
+                            expiry.level
+                          )}`}
+                          aria-hidden
+                        >
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${getProgressColor(
+                              expiry.level
+                            )}`}
+                            style={{ width: `${expiry.progress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={
                           b.status === "disponible"
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                        }`}
+                            ? "success"
+                            : b.status === "agotado"
+                            ? "neutral"
+                            : "warning"
+                        }
                       >
                         {b.status}
-                      </span>
+                      </Badge>
                     </td>
                     {canDelete && (
                       <td className="px-4 py-3 text-right">
                         <ConfirmDelete
                           title="¿Borrar este lote?"
-                          message={`${productName(b.product_id)} · ${b.quantity} · caduca el ${b.expiry_date}. Esta acción no se puede deshacer.`}
+                          message={`${product?.name ?? "Producto"} · ${b.quantity} · caduca el ${b.expiry_date}. Esta acción no se puede deshacer.`}
                           onConfirm={() => deleteBatch(b.id)}
                           trigger={TrashIcon}
                         />
@@ -169,7 +205,7 @@ export default function InventoryPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </Surface>
       )}
     </AppShell>
   );
@@ -177,7 +213,7 @@ export default function InventoryPage() {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+    <Surface hover={false} className="p-16 text-center">
       <div className="mb-3 flex justify-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
           <Package className="h-8 w-8 text-slate-400" />
@@ -189,7 +225,7 @@ function EmptyState() {
       <p className="text-sm text-slate-500 dark:text-slate-400">
         Pulsa "Nuevo lote" para registrar tu primera entrada de alimentos.
       </p>
-    </div>
+    </Surface>
   );
 }
 
@@ -257,10 +293,7 @@ function NewBatchForm({
     "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
-    <form
-      onSubmit={submit}
-      className="mb-6 animate-slide-up space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-    >
+    <Surface hover={false} className="mb-6 animate-slide-up space-y-4 p-5">
       <div className="flex gap-2">
         <input
           placeholder="Nuevo producto (ej. Manzanas)"
@@ -337,6 +370,6 @@ function NewBatchForm({
           {loading ? "Guardando…" : "Crear lote"}
         </Button>
       </div>
-    </form>
+    </Surface>
   );
 }
