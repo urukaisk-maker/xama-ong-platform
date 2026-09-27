@@ -1,12 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api } from "@/lib/api";
+import { useUser } from "@/components/AuthGuard";
+import { api, downloadFile } from "@/lib/api";
 import type { ImpactMetrics } from "@/lib/types";
 
 export default function DashboardPage() {
   const [m, setM] = useState<ImpactMetrics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const { user } = useUser();
+  const canDownload =
+    user?.role_name === "junta" ||
+    user?.role_name === "coordinador_reus" ||
+    user?.role_name === "coordinador_tarragona";
+
+  const year = new Date().getFullYear();
 
   useEffect(() => {
     api<ImpactMetrics>("/api/metrics/impact")
@@ -15,9 +25,50 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const download = async (kind: "pdf" | "csv") => {
+    setDownloading(kind);
+    try {
+      if (kind === "pdf") {
+        await downloadFile(
+          `/api/metrics/report.pdf?year=${year}`,
+          `xama-informe-${year}.pdf`
+        );
+      } else {
+        await downloadFile(
+          `/api/metrics/export.csv?year=${year}`,
+          `xama-informe-${year}.csv`
+        );
+      }
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error al descargar");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   return (
     <AppShell>
-      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        {canDownload && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => download("csv")}
+              disabled={downloading !== null}
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {downloading === "csv" ? "Generando…" : "Exportar CSV"}
+            </button>
+            <button
+              onClick={() => download("pdf")}
+              disabled={downloading !== null}
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50"
+            >
+              {downloading === "pdf" ? "Generando…" : "Descargar informe PDF"}
+            </button>
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <p className="text-slate-500">Cargando…</p>
@@ -25,7 +76,6 @@ export default function DashboardPage() {
         <p className="text-rose-600">No se pudieron cargar las métricas</p>
       ) : (
         <>
-          {/* Impacto ambiental */}
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase text-slate-500">
               Impacto
@@ -59,7 +109,6 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Inventario */}
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase text-slate-500">
               Inventario
@@ -79,7 +128,6 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Familias */}
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase text-slate-500">
               Familias atendidas
@@ -93,7 +141,6 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Entregas y derivaciones */}
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase text-slate-500">
               Repartos y derivaciones
@@ -114,7 +161,6 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          {/* Voluntariado */}
           <section className="mb-8">
             <h2 className="mb-3 text-sm font-semibold uppercase text-slate-500">
               Voluntariado

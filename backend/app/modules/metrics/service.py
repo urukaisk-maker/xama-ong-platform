@@ -1,16 +1,16 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import case, extract, func, select
+from sqlalchemy import extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.families.models import Delivery, Family
 from app.modules.inventory.models import Batch, Product
 from app.modules.metrics import schemas
 from app.modules.nevera.models import Derivation, NeveraRation
-from app.modules.users.models import User
+from app.modules.users.models import Role, User
 from app.modules.volunteers.models import Shift, ShiftAssignment
 
-CO2_FACTOR = 2.5  # kg CO2 evitado por kg de alimento recuperado
+CO2_FACTOR = 2.5
 
 
 async def get_impact(db: AsyncSession) -> schemas.ImpactMetrics:
@@ -100,7 +100,6 @@ async def get_impact(db: AsyncSession) -> schemas.ImpactMetrics:
 
 
 async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
-    # kg recuperados por mes
     kg_stmt = (
         select(
             extract("month", Batch.created_at).label("m"),
@@ -111,7 +110,6 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
     )
     kg_rows = {int(r.m): float(r.kg) for r in (await db.execute(kg_stmt)).all()}
 
-    # entregas por mes
     del_stmt = (
         select(
             extract("month", Delivery.created_at).label("m"),
@@ -122,7 +120,6 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
     )
     del_rows = {int(r.m): int(r.c) for r in (await db.execute(del_stmt)).all()}
 
-    # nevera por mes
     nev_stmt = (
         select(
             extract("month", NeveraRation.date).label("m"),
@@ -133,7 +130,6 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
     )
     nev_rows = {int(r.m): int(r.c) for r in (await db.execute(nev_stmt)).all()}
 
-    # horas por mes
     hrs_stmt = (
         select(
             extract("month", ShiftAssignment.created_at).label("m"),
@@ -157,3 +153,43 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
     ]
 
     return schemas.MonthlySeries(year=year, points=points)
+
+
+# ─── Exportaciones ───
+async def export_csv_data(db: AsyncSession, year: int) -> dict:
+    """Devuelve un dict con toda la info para generar CSV."""
+    impact = await get_impact(db)
+    monthly = await get_monthly(db, year)
+
+    # ranking voluntarios
+    stmt = (
+        select(
+            User.full_name,
+            func.coalesce(func.sum(ShiftAssignment.hours), 0).label("h"),
+            func.count(ShiftAssignment.id).label("t"),
+        )
+        .join(
+            ShiftAssignment,
+            ShiftAssignment.user_id == User.id,
+            isouter=True,
+        )
+        .group_by(User.id, User.full_name)
+        .order_by(func.coalesce(func.sum(ShiftAssignment.hours), 0).desc())
+    )
+    rows = (await db.execute(stmt)).all()
+    volunteers = [
+        {"name": r.full_name, "hours": float(r.h or 0), "shifts": int(r.t or 0)}
+        for r in rows
+    ]
+
+    return {
+        "year": year,
+        "impact": impact,
+        "monthly": monthly,
+        "volunteers": volunteers,
+    }
+
+
+async def export_pdf_data(db: AsyncSession, year: int) -> dict:
+    """Lo mismo que CSV, pero preparado para PDF."""
+    return await export_csv_data(db, year)
