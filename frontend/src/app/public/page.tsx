@@ -1,8 +1,16 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Quote,
+  Sparkles,
+  Heart,
+} from "lucide-react";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import DeveloperModal from "@/components/DeveloperModal";
+import IconByName from "@/components/IconByName";
 import { SITE_CONFIG } from "@/lib/site-config";
 
 type Stats = {
@@ -18,7 +26,7 @@ type Stats = {
   tarragona_families: number;
 };
 
-const { ong, developer } = SITE_CONFIG;
+const { ong, developer, testimonials, pillars, companyBenefits } = SITE_CONFIG;
 
 export default function PublicPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -34,6 +42,7 @@ export default function PublicPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white">
+      {/* ─── Nav ─── */}
       <nav className="sticky top-0 z-10 border-b border-emerald-100 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
@@ -45,13 +54,13 @@ export default function PublicPage() {
           <div className="flex items-center gap-3">
             <a
               href="#donar"
-              className="hidden rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 md:inline-block"
+              className="hidden rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 hover:shadow-md md:inline-block"
             >
               Donar
             </a>
             <Link
               href="/login"
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               Acceder
             </Link>
@@ -59,9 +68,10 @@ export default function PublicPage() {
         </div>
       </nav>
 
+      {/* ─── Hero ─── */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 text-center md:pt-24">
         <div className="mb-4 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-medium text-emerald-800">
-          {ong.address}
+          📍 {ong.address}
         </div>
         <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-tight text-slate-900 md:text-6xl">
           Recuperamos alimentos,{" "}
@@ -76,19 +86,20 @@ export default function PublicPage() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
             href="#donar"
-            className="rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg"
           >
-            Quiero donar
+            Quiero donar <ArrowRight className="h-4 w-4" />
           </a>
           <a
             href="#voluntariado"
-            className="rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Ser voluntario
           </a>
         </div>
       </section>
 
+      {/* ─── Contadores ─── */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         {stats ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -110,6 +121,41 @@ export default function PublicPage() {
         )}
       </section>
 
+      {/* ─── Cómo lo hacemos (4 pilares) ─── */}
+      <section className="border-t border-slate-100 bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">
+              Cómo lo hacemos
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+              Cuatro pilares simples que convierten el desperdicio en
+              dignidad.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {pillars.map((p) => (
+              <div
+                key={p.title}
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-emerald-300 hover:shadow-lg"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 transition group-hover:bg-emerald-600 group-hover:text-white">
+                  <IconByName name={p.icon} className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-slate-900">
+                  {p.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-600">
+                  {p.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── DONAR ─── */}
       <section id="donar" className="border-t border-emerald-100 bg-emerald-50/50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -194,33 +240,10 @@ export default function PublicPage() {
           </div>
 
           <DonationCertificateForm />
-
-          <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <div className="mb-3 text-3xl">🏢</div>
-            <h3 className="mb-2 text-xl font-bold text-slate-900">
-              ¿Eres empresa?
-            </h3>
-            <p className="mx-auto mb-4 max-w-2xl text-sm text-slate-600">
-              Aceptamos donaciones corporativas, excedentes alimentarios y
-              patrocinios. Emitimos certificados de impacto ambiental y
-              social para vuestra memoria de sostenibilidad.
-            </p>
-            <a
-              href={`mailto:${ong.email}`}
-              className="inline-block rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
-            >
-              Contactar con {ong.name}
-            </a>
-          </div>
-
-          <p className="mt-8 text-center text-xs text-slate-500">
-            {ong.fullName}. Las donaciones son deducibles fiscalmente según la
-            Ley 49/2002. Emitimos certificados de donación para personas
-            físicas y jurídicas.
-          </p>
         </div>
       </section>
 
+      {/* ─── VOLUNTARIADO ─── */}
       <section id="voluntariado" className="border-t border-slate-100 bg-slate-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -236,7 +259,11 @@ export default function PublicPage() {
 
           <div className="mx-auto max-w-2xl">
             <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-              <div className="mb-3 text-3xl">🤝</div>
+              <div className="mb-3 flex justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <Heart className="h-6 w-6" />
+                </div>
+              </div>
               <h3 className="mb-2 text-xl font-bold text-slate-900">
                 Únete al equipo de voluntarios
               </h3>
@@ -246,26 +273,161 @@ export default function PublicPage() {
               </p>
               <a
                 href={`mailto:${ong.email}?subject=Quiero%20ser%20voluntario%2Fa%20en%20${ong.name}`}
-                className="inline-block rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
+                className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-emerald-700 hover:shadow-lg"
               >
-                Quiero ser voluntario
+                Quiero ser voluntario <ArrowRight className="h-4 w-4" />
               </a>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="mb-12 text-center text-3xl font-bold text-slate-900 md:text-4xl">
-          Cómo funciona
-        </h2>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <Step num="01" title="Recogemos" desc="Comercios, agricultores y empresas nos avisan de sus excedentes. Nuestros voluntarios los recogen en furgoneta." />
-          <Step num="02" title="Clasificamos" desc="En el almacén revisamos el estado de cada producto, controlamos caducidades y preparamos las cestas." />
-          <Step num="03" title="Repartimos" desc="Cada semana, familias de Reus y Tarragona vienen a recoger su cesta. Sin colas, sin papeles, con dignidad." />
+      {/* ─── TESTIMONIOS ─── */}
+      <section className="border-t border-slate-100 bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="mb-12 text-center">
+            <div className="mb-4 flex justify-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <Quote className="h-6 w-6" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">
+              Lo que dicen de nosotros
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+              Voluntarios, familias y empresas que forman parte de XAMA.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {testimonials.map((t, i) => (
+              <div
+                key={i}
+                className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+              >
+                <Quote className="absolute right-5 top-5 h-8 w-8 text-emerald-100" />
+                <p className="mb-6 text-sm italic leading-relaxed text-slate-700">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="flex items-center gap-3 border-t border-slate-100 pt-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
+                    {t.author.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {t.author}
+                    </p>
+                    <p className="text-xs text-slate-500">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
+      {/* ─── EMPRESAS ─── */}
+      <section className="border-t border-slate-100 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
+            <div>
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
+                <Sparkles className="h-3.5 w-3.5" />
+                Para empresas
+              </div>
+              <h2 className="mb-4 text-3xl font-bold text-slate-900 md:text-4xl">
+                ¿Eres empresa?
+              </h2>
+              <p className="mb-6 text-slate-600">
+                Si tu negocio genera excedentes alimentarios, podemos recogerlos
+                cada semana y certificar el impacto ambiental y social. Sin
+                coste para ti, con beneficios reales.
+              </p>
+
+              <ul className="mb-8 space-y-3">
+                {companyBenefits.map((b, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                    <span className="text-slate-700">{b}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={`mailto:${ong.email}?subject=Colaboraci%C3%B3n%20empresarial%20con%20${ong.name}`}
+                className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-slate-700 hover:shadow-lg"
+              >
+                Contactar con {ong.name} <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                  <Sparkles className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">
+                  Impacto corporativo
+                </h3>
+              </div>
+              <p className="mb-6 text-sm text-slate-600">
+                Cada kg de alimento recuperado evita ~2,5 kg de CO₂. Te damos
+                las cifras listas para tu memoria de sostenibilidad.
+              </p>
+              <div className="space-y-3">
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">
+                    Ahorro medio de una panadería
+                  </p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    ~30 kg/semana
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                  <p className="text-xs text-slate-500">
+                    CO₂ evitado por donante/año
+                  </p>
+                  <p className="text-lg font-bold text-emerald-600">
+                    ~3.000 kg
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CTA FINAL ─── */}
+      <section className="border-t border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-800 py-20 text-white">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
+            Únete a XAMA-ONG
+          </h2>
+          <p className="mb-8 text-lg text-emerald-50">
+            Dona, hazte voluntario o trae el excedente de tu empresa. Cada
+            gesto se convierte en comida sobre la mesa de una familia.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#donar"
+              className="inline-flex items-center gap-2 rounded-md bg-white px-6 py-3 text-sm font-semibold text-emerald-700 transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Quiero donar <ArrowRight className="h-4 w-4" />
+            </a>
+            <a
+              href="#voluntariado"
+              className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+            >
+              Quiero ser voluntario
+            </a>
+          </div>
+          <p className="mt-8 text-sm text-emerald-100">
+            📧 {ong.email} · 📱 Bizum: {ong.bizumPhone}
+          </p>
+        </div>
+      </section>
+
+      {/* ─── Footer ─── */}
       <footer className="border-t border-slate-200 bg-slate-900 py-14 text-slate-300">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
@@ -292,13 +454,13 @@ export default function PublicPage() {
                 Enlaces
               </h3>
               <ul className="space-y-2 text-sm">
-                <li><a href="#donar" className="hover:text-white">Donar</a></li>
-                <li><a href="#voluntariado" className="hover:text-white">Voluntariado</a></li>
-                <li><Link href="/login" className="hover:text-white">Acceso voluntarios</Link></li>
+                <li><a href="#donar" className="transition hover:text-white">Donar</a></li>
+                <li><a href="#voluntariado" className="transition hover:text-white">Voluntariado</a></li>
+                <li><Link href="/login" className="transition hover:text-white">Acceso voluntarios</Link></li>
                 <li>
                   <a
                     href="https://github.com/urukaisk-maker/xama-ong-platform"
-                    className="hover:text-white"
+                    className="transition hover:text-white"
                     target="_blank"
                     rel="noreferrer"
                   >
@@ -313,9 +475,9 @@ export default function PublicPage() {
                 Legal
               </h3>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/legal/terms" className="hover:text-white">Términos de uso</Link></li>
-                <li><Link href="/legal/privacy" className="hover:text-white">Política de privacidad</Link></li>
-                <li><Link href="/legal/cookies" className="hover:text-white">Política de cookies</Link></li>
+                <li><Link href="/legal/terms" className="transition hover:text-white">Términos de uso</Link></li>
+                <li><Link href="/legal/privacy" className="transition hover:text-white">Política de privacidad</Link></li>
+                <li><Link href="/legal/cookies" className="transition hover:text-white">Política de cookies</Link></li>
               </ul>
             </div>
           </div>
@@ -368,6 +530,8 @@ export default function PublicPage() {
   );
 }
 
+/* ─── Componentes ─── */
+
 function StatCard({ icon, value, decimals, suffix, label, color }: {
   icon: string;
   value: number;
@@ -383,7 +547,7 @@ function StatCard({ icon, value, decimals, suffix, label, color }: {
     slate: "text-slate-900",
   };
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="mb-2 text-2xl">{icon}</div>
       <div className={`text-2xl font-bold md:text-3xl ${colors[color]}`}>
         <AnimatedCounter target={value} decimals={decimals} suffix={suffix} />
@@ -395,7 +559,7 @@ function StatCard({ icon, value, decimals, suffix, label, color }: {
 
 function ImpactCard({ amount, desc }: { amount: string; desc: string }) {
   return (
-    <div className="rounded-xl border border-emerald-200 bg-white p-5 text-center shadow-sm">
+    <div className="rounded-xl border border-emerald-200 bg-white p-5 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="mb-1 text-2xl font-bold text-emerald-600">{amount}</div>
       <div className="text-xs text-slate-600">{desc}</div>
     </div>
@@ -425,20 +589,10 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   return (
     <button
       onClick={copy}
-      className="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-700"
+      className="w-full rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white transition hover:bg-slate-700"
     >
       {copied ? "✓ Copiado" : label}
     </button>
-  );
-}
-
-function Step({ num, title, desc }: { num: string; title: string; desc: string }) {
-  return (
-    <div>
-      <div className="mb-3 text-sm font-bold text-emerald-600">{num}</div>
-      <h3 className="mb-2 text-lg font-bold text-slate-900">{title}</h3>
-      <p className="text-sm text-slate-600">{desc}</p>
-    </div>
   );
 }
 
@@ -494,6 +648,9 @@ function DonationCertificateForm() {
     }
   };
 
+  const inputCls =
+    "w-full rounded-md border border-slate-300 px-3 py-2 text-sm transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
+
   return (
     <div className="mt-10 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-6 md:p-8">
       <div className="mb-4 flex items-start gap-3">
@@ -514,7 +671,7 @@ function DonationCertificateForm() {
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          className="rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
         >
           Generar certificado
         </button>
@@ -528,7 +685,7 @@ function DonationCertificateForm() {
               <input
                 value={data.donor_name}
                 onChange={(e) => setData({ ...data, donor_name: e.target.value })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 placeholder="Maria García López"
                 required
               />
@@ -541,7 +698,7 @@ function DonationCertificateForm() {
               <input
                 value={data.donor_tax_id}
                 onChange={(e) => setData({ ...data, donor_tax_id: e.target.value })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 placeholder="12345678Z"
                 required
               />
@@ -557,7 +714,7 @@ function DonationCertificateForm() {
                 step="0.01"
                 value={data.amount}
                 onChange={(e) => setData({ ...data, amount: Number(e.target.value) })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 required
               />
             </label>
@@ -570,7 +727,7 @@ function DonationCertificateForm() {
                 type="date"
                 value={data.donation_date}
                 onChange={(e) => setData({ ...data, donation_date: e.target.value })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 required
               />
             </label>
@@ -582,7 +739,7 @@ function DonationCertificateForm() {
               <input
                 value={data.donor_address}
                 onChange={(e) => setData({ ...data, donor_address: e.target.value })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 placeholder="Carrer Major 12, Reus"
               />
             </label>
@@ -594,7 +751,7 @@ function DonationCertificateForm() {
               <input
                 value={data.concept}
                 onChange={(e) => setData({ ...data, concept: e.target.value })}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={inputCls}
                 placeholder="Donación puntual"
               />
             </label>
@@ -628,7 +785,7 @@ function DonationCertificateForm() {
             <button
               onClick={download}
               disabled={loading || !data.donor_name || !data.donor_tax_id || !data.amount}
-              className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
             >
               {loading ? "Generando…" : "Descargar certificado PDF"}
             </button>
@@ -638,7 +795,7 @@ function DonationCertificateForm() {
                 setErr(null);
                 setDone(false);
               }}
-              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50"
             >
               Cancelar
             </button>
