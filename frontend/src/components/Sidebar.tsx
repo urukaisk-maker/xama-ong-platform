@@ -12,7 +12,7 @@ type LinkItem = {
 };
 
 const LINKS: LinkItem[] = [
-  { href: "/", label: "Dashboard", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
+  { href: "/dashboard", label: "Dashboard", ... }
   { href: "/inventory", label: "Inventario", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
   { href: "/families", label: "Familias", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
   { href: "/deliveries", label: "Entregas", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },

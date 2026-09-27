@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import { SITE_CONFIG } from "@/lib/site-config";
 
 type Stats = {
   total_kg_recovered: number;
@@ -16,13 +17,7 @@ type Stats = {
   tarragona_families: number;
 };
 
-const DONATION_CONFIG = {
-  bizumPhone: "600 000 000",
-  iban: "ES00 0000 0000 0000 0000 0000",
-  ibanHolder: "XAMA ONG",
-  email: "hola@xamaong.cat",
-  bankName: "CaixaBank",
-};
+const { ong, developer } = SITE_CONFIG;
 
 export default function PublicPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -44,7 +39,7 @@ export default function PublicPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-bold text-white">
               X
             </div>
-            <span className="text-lg font-bold text-slate-900">XAMA-ONG</span>
+            <span className="text-lg font-bold text-slate-900">{ong.name}</span>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -66,14 +61,14 @@ export default function PublicPage() {
       {/* ─── Hero ─── */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 text-center md:pt-24">
         <div className="mb-4 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-medium text-emerald-800">
-          Reus · Tarragona
+          {ong.address}
         </div>
         <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-tight text-slate-900 md:text-6xl">
           Recuperamos alimentos,{" "}
           <span className="text-emerald-600">alimentamos esperanza</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600">
-          En XAMA rescatamos los excedentes de comercios, agricultores y
+          En {ong.name} rescatamos los excedentes de comercios, agricultores y
           empresas para hacerlos llegar a las familias que más lo necesitan.
           Cero desperdicio, máxima dignidad.
         </p>
@@ -116,9 +111,7 @@ export default function PublicPage() {
         )}
       </section>
 
-      {/* ═══════════════════════════════════════════ */}
       {/* ─── DONAR ─── */}
-      {/* ═══════════════════════════════════════════ */}
       <section id="donar" className="border-t border-emerald-100 bg-emerald-50/50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -140,30 +133,25 @@ export default function PublicPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Bizum */}
             <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-white p-8 shadow-sm">
               <div className="absolute right-4 top-4 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
                 Recomendado
               </div>
               <div className="mb-4 text-4xl">📱</div>
-              <h3 className="mb-2 text-2xl font-bold text-slate-900">
-                Bizum
-              </h3>
+              <h3 className="mb-2 text-2xl font-bold text-slate-900">Bizum</h3>
               <p className="mb-6 text-sm text-slate-600">
-                Envía tu donación desde tu app bancaria al número de XAMA.
+                Envía tu donación desde tu app bancaria al número de {ong.name}.
                 Rápido, sin comisiones para ti.
               </p>
-
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">
                   Número Bizum
                 </div>
                 <div className="mb-3 font-mono text-xl font-bold tracking-wider text-slate-900">
-                  {DONATION_CONFIG.bizumPhone}
+                  {ong.bizumPhone}
                 </div>
-                <CopyButton value={DONATION_CONFIG.bizumPhone} label="Copiar número" />
+                <CopyButton value={ong.bizumPhone} label="Copiar número" />
               </div>
-
               <p className="mt-4 text-xs text-slate-500">
                 💡 En el concepto de la operación, indica{" "}
                 <b>&quot;Donación&quot;</b>. Te enviaremos un email de
@@ -172,7 +160,6 @@ export default function PublicPage() {
               </p>
             </div>
 
-            {/* Transferencia */}
             <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="mb-4 text-4xl">🏦</div>
               <h3 className="mb-2 text-2xl font-bold text-slate-900">
@@ -182,27 +169,25 @@ export default function PublicPage() {
                 Ideal para donaciones grandes o recurrentes. Sin comisión en
                 muchos bancos.
               </p>
-
               <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <div>
                   <div className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">
                     IBAN
                   </div>
                   <div className="mb-2 break-all font-mono text-sm font-semibold text-slate-900">
-                    {DONATION_CONFIG.iban}
+                    {ong.iban}
                   </div>
-                  <CopyButton value={DONATION_CONFIG.iban} label="Copiar IBAN" />
+                  <CopyButton value={ong.iban} label="Copiar IBAN" />
                 </div>
                 <div className="border-t border-slate-200 pt-3">
                   <div className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">
                     Titular
                   </div>
                   <div className="text-sm font-semibold text-slate-900">
-                    {DONATION_CONFIG.ibanHolder}
+                    {ong.ibanHolder}
                   </div>
                 </div>
               </div>
-
               <p className="mt-4 text-xs text-slate-500">
                 💡 En el concepto, indica tu nombre y{" "}
                 <b>&quot;Donación&quot;</b> para emitir el certificado.
@@ -210,10 +195,8 @@ export default function PublicPage() {
             </div>
           </div>
 
-          {/* ─── Certificado de donación ─── */}
           <DonationCertificateForm />
 
-          {/* Empresas / mecenazgo */}
           <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
             <div className="mb-3 text-3xl">🏢</div>
             <h3 className="mb-2 text-xl font-bold text-slate-900">
@@ -225,17 +208,17 @@ export default function PublicPage() {
               social para vuestra memoria de sostenibilidad.
             </p>
             <a
-              href={`mailto:${DONATION_CONFIG.email}`}
+              href={`mailto:${ong.email}`}
               className="inline-block rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-700"
             >
-              Contactar con XAMA
+              Contactar con {ong.name}
             </a>
           </div>
 
           <p className="mt-8 text-center text-xs text-slate-500">
-            XAMA-ONG es una asociación sin ánimo de lucro. Las donaciones son
-            deducibles fiscalmente según la Ley 49/2002. Emitimos certificados
-            de donación para personas físicas y jurídicas.
+            {ong.fullName}. Las donaciones son deducibles fiscalmente según la
+            Ley 49/2002. Emitimos certificados de donación para personas
+            físicas y jurídicas.
           </p>
         </div>
       </section>
@@ -265,7 +248,7 @@ export default function PublicPage() {
                 un rol y te acompañamos en las primeras jornadas.
               </p>
               <a
-                href={`mailto:${DONATION_CONFIG.email}?subject=Quiero%20ser%20voluntario%2Fa%20en%20XAMA`}
+                href={`mailto:${ong.email}?subject=Quiero%20ser%20voluntario%2Fa%20en%20${ong.name}`}
                 className="inline-block rounded-md bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
               >
                 Quiero ser voluntario
@@ -288,46 +271,37 @@ export default function PublicPage() {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-slate-200 bg-slate-900 py-12 text-slate-300">
+      <footer className="border-t border-slate-200 bg-slate-900 py-14 text-slate-300">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-            <div>
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+            {/* ONG */}
+            <div className="md:col-span-2">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-bold text-white">
                   X
                 </div>
-                <span className="text-lg font-bold text-white">XAMA-ONG</span>
+                <span className="text-lg font-bold text-white">{ong.name}</span>
               </div>
-              <p className="text-sm">
-                Asociación sin ánimo de lucro dedicada a la recuperación de
-                alimentos y su distribución a familias en situación de
-                vulnerabilidad.
+              <p className="text-sm leading-relaxed">
+                {ong.fullName} dedicada a la recuperación de alimentos y su
+                distribución a familias en situación de vulnerabilidad.
               </p>
-            </div>
-            <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">
-                Contacto
-              </h3>
-              <ul className="space-y-1 text-sm">
-                <li>📧 {DONATION_CONFIG.email}</li>
-                <li>📱 Bizum: {DONATION_CONFIG.bizumPhone}</li>
-                <li>📍 Reus · Tarragona</li>
+              <ul className="mt-4 space-y-1 text-sm">
+                <li>📧 {ong.email}</li>
+                <li>📱 Bizum: {ong.bizumPhone}</li>
+                <li>📍 {ong.address}</li>
               </ul>
             </div>
+
+            {/* Enlaces */}
             <div>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">
                 Enlaces
               </h3>
-              <ul className="space-y-1 text-sm">
-                <li>
-                  <a href="#donar" className="hover:text-white">Donar</a>
-                </li>
-                <li>
-                  <a href="#voluntariado" className="hover:text-white">Voluntariado</a>
-                </li>
-                <li>
-                  <Link href="/login" className="hover:text-white">Acceso voluntarios</Link>
-                </li>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#donar" className="hover:text-white">Donar</a></li>
+                <li><a href="#voluntariado" className="hover:text-white">Voluntariado</a></li>
+                <li><Link href="/login" className="hover:text-white">Acceso voluntarios</Link></li>
                 <li>
                   <a
                     href="https://github.com/urukaisk-maker/xama-ong-platform"
@@ -340,9 +314,64 @@ export default function PublicPage() {
                 </li>
               </ul>
             </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">
+                Legal
+              </h3>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="/legal/terms" className="hover:text-white">Términos de uso</Link></li>
+                <li><Link href="/legal/privacy" className="hover:text-white">Política de privacidad</Link></li>
+                <li><Link href="/legal/cookies" className="hover:text-white">Política de cookies</Link></li>
+              </ul>
+            </div>
           </div>
-          <div className="mt-10 border-t border-slate-800 pt-6 text-center text-xs text-slate-400">
-            © {new Date().getFullYear()} XAMA-ONG · Hecho con voluntad y código abierto
+
+          {/* Desarrollador */}
+          <div className="mt-12 border-t border-slate-800 pt-8">
+            <div className="rounded-lg bg-slate-800/50 p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Desarrollado por
+              </p>
+              <p className="mt-1 text-lg font-bold text-white">
+                {developer.name}
+              </p>
+              <p className="text-sm text-slate-400">
+                {developer.role} · {developer.location}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                {developer.projects.map((p) => (
+                  <a
+                    key={p.url}
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
+                  >
+                    {p.label} →
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-center text-xs text-slate-400 md:flex-row md:text-left">
+            <p>
+              © {new Date().getFullYear()} {ong.name} · Todos los derechos
+              reservados
+            </p>
+            <p>
+              Hecho con voluntad y código abierto por{" "}
+              <a
+                href={developer.projects[0]?.url ?? "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-400 hover:text-emerald-300"
+              >
+                {developer.name}
+              </a>
+            </p>
           </div>
         </div>
       </footer>
@@ -426,7 +455,6 @@ function Step({ num, title, desc }: { num: string; title: string; desc: string }
   );
 }
 
-/* ─── Formulario del certificado de donación ─── */
 function DonationCertificateForm() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
