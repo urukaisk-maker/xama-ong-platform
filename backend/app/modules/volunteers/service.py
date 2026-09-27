@@ -15,6 +15,8 @@ async def list_shifts(
     site: str | None = None,
     target_date: date | None = None,
     role: str | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
 ) -> list[models.Shift]:
     stmt = (
         select(models.Shift)
@@ -25,6 +27,10 @@ async def list_shifts(
         stmt = stmt.where(models.Shift.site == site)
     if target_date:
         stmt = stmt.where(models.Shift.shift_date == target_date)
+    if from_date:
+        stmt = stmt.where(models.Shift.shift_date >= from_date)
+    if to_date:
+        stmt = stmt.where(models.Shift.shift_date <= to_date)
     if role:
         stmt = stmt.where(models.Shift.role == role)
     result = await db.execute(stmt)
@@ -207,17 +213,11 @@ async def hours_summary(db: AsyncSession, limit: int = 20) -> schemas.HoursSumma
     )
 
 
-async def certificate_data(
-    db: AsyncSession, user_id: uuid.UUID
-) -> dict:
-    """Recopila todos los datos necesarios para el certificado."""
+async def certificate_data(db: AsyncSession, user_id: uuid.UUID) -> dict:
     user = await db.get(User, user_id)
     if user is None:
         raise ValueError("Usuario no encontrado")
-
     hours_data = await my_hours(db, user_id)
-
-    # Fecha del primer turno asignado
     first_shift = await db.scalar(
         select(func.min(models.Shift.shift_date))
         .select_from(models.Shift)
@@ -227,15 +227,12 @@ async def certificate_data(
         )
         .where(models.ShiftAssignment.user_id == user_id)
     )
-
-    # Número de certificado único por usuario y año
     year = datetime.now(timezone.utc).year
     short_id = str(user_id).replace("-", "")[:6].upper()
     cert_number = f"XAMA-{year}-{short_id}"
-
     return {
         "full_name": user.full_name,
-        "dni": None,  # se añadirá si se crea el campo
+        "dni": None,
         "site": user.site,
         "total_hours": hours_data.total_hours,
         "total_shifts": hours_data.total_shifts,

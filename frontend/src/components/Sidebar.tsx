@@ -16,7 +16,8 @@ const LINKS: LinkItem[] = [
   { href: "/families", label: "Familias", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
   { href: "/deliveries", label: "Entregas", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
   { href: "/nevera", label: "Nevera Solidària", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "servicios_sociales", "voluntario"] },
-  { href: "/shifts", label: "Cuadrantes", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
+    { href: "/shifts", label: "Turnos (lista)", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
+  { href: "/shifts/calendar", label: "Calendario", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
   { href: "/volunteers", label: "Voluntarios", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
   { href: "/admin/users", label: "Usuarios", roles: ["junta"] },
 ];

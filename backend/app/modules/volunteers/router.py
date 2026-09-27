@@ -28,13 +28,17 @@ async def _role_of(db: AsyncSession, user: User) -> str | None:
 async def list_shifts(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
     target_date: date | None = Query(None),
+    from_date: date | None = Query(None),
+    to_date: date | None = Query(None),
     role: str | None = Query(
         None, pattern="^(vehiculo|clasificacion|cestas|puerta)$"
     ),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
-    return await service.list_shifts(db, site, target_date, role)
+    return await service.list_shifts(
+        db, site, target_date, role, from_date, to_date
+    )
 
 
 @router.post("/shifts", response_model=schemas.ShiftRead, status_code=201)
