@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +44,52 @@ async def me(
     )
 
 
+@router.get("/roles", response_model=list[schemas.RoleRead])
+async def list_roles(
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("junta")),
+):
+    return await service.list_roles(db)
+
+
+@router.get("/users", response_model=list[schemas.UserRead])
+async def list_users(
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("junta")),
+):
+    return await service.list_users(db)
+
+
+@router.post(
+    "/users",
+    response_model=schemas.UserRead,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_user_endpoint(
+    payload: schemas.UserCreate,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("junta")),
+):
+    existing = await service.get_user_by_email(db, payload.email)
+    if existing is not None:
+        raise HTTPException(status_code=400, detail="Email ya registrado")
+    return await service.create_user(db, payload)
+
+
+@router.patch("/users/{user_id}", response_model=schemas.UserRead)
+async def update_user_endpoint(
+    user_id: uuid.UUID,
+    payload: schemas.UserUpdate,
+    db: AsyncSession = Depends(get_db),
+    _admin: User = Depends(require_role("junta")),
+):
+    user = await service.update_user(db, user_id, payload)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return user
+
+
+# Endpoint legado para compatibilidad
 @router.post(
     "/register",
     response_model=schemas.UserRead,

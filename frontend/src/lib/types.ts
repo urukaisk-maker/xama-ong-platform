@@ -9,6 +9,21 @@ export type UserMe = {
   role_name: string | null;
 };
 
+export type User = {
+  id: string;
+  email: string;
+  full_name: string;
+  site: string | null;
+  role_id: number | null;
+  active: boolean;
+  created_at: string;
+};
+
+export type Role = {
+  id: number;
+  name: string;
+};
+
 export type InventorySummary = {
   total_products: number;
   total_batches: number;

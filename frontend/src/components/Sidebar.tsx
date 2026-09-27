@@ -4,19 +4,29 @@ import { usePathname, useRouter } from "next/navigation";
 import { clearToken } from "@/lib/api";
 import type { UserMe } from "@/lib/types";
 
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/inventory", label: "Inventario" },
-  { href: "/families", label: "Familias" },
-  { href: "/deliveries", label: "Entregas" },
-  { href: "/nevera", label: "Nevera Solidària" },
-  { href: "/shifts", label: "Cuadrantes" },
-  { href: "/volunteers", label: "Voluntarios" },
+type LinkItem = {
+  href: string;
+  label: string;
+  roles: string[];
+};
+
+const LINKS: LinkItem[] = [
+  { href: "/", label: "Dashboard", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
+  { href: "/inventory", label: "Inventario", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
+  { href: "/families", label: "Familias", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
+  { href: "/deliveries", label: "Entregas", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
+  { href: "/nevera", label: "Nevera Solidària", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "servicios_sociales", "voluntario"] },
+  { href: "/shifts", label: "Cuadrantes", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
+  { href: "/volunteers", label: "Voluntarios", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
+  { href: "/admin/users", label: "Usuarios", roles: ["junta"] },
 ];
 
 export default function Sidebar({ user }: { user: UserMe | null }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const role = user?.role_name ?? "";
+  const visible = LINKS.filter((l) => l.roles.includes(role));
 
   const logout = () => {
     clearToken();
@@ -30,8 +40,8 @@ export default function Sidebar({ user }: { user: UserMe | null }) {
         <p className="text-xs text-slate-500">Plataforma Integral</p>
       </div>
 
-      <nav className="flex-1 space-y-1 p-3">
-        {links.map((l) => {
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        {visible.map((l) => {
           const active = pathname === l.href;
           return (
             <Link
@@ -53,6 +63,7 @@ export default function Sidebar({ user }: { user: UserMe | null }) {
         <p className="truncate text-sm font-medium">{user?.full_name}</p>
         <p className="mb-2 truncate text-xs text-slate-500">
           {user?.role_name ?? "-"}
+          {user?.site && ` · ${user.site}`}
         </p>
         <button
           onClick={logout}

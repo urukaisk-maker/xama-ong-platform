@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LoginRequest(BaseModel):
@@ -26,6 +26,14 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=4)
 
 
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    site: str | None = None
+    role_id: int | None = None
+    active: bool | None = None
+    password: str | None = Field(None, min_length=4)
+
+
 class UserRead(UserBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -34,3 +42,9 @@ class UserRead(UserBase):
 
 class UserMe(UserRead):
     role_name: str | None = None
+
+
+class RoleRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    name: str
