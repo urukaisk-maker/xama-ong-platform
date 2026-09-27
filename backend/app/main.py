@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.modules.donations.router import router as donations_router
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
@@ -54,6 +54,7 @@ app.include_router(families_router)
 app.include_router(volunteers_router)
 app.include_router(nevera_router)
 app.include_router(metrics_router)
+app.include_router(donations_router)
 app.include_router(public_router)
 app.include_router(audit_router)
 app.include_router(admin_router)
