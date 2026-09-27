@@ -24,6 +24,7 @@ const LINKS: LinkItem[] = [
   { href: "/admin/analytics", label: "Analítica", roles: ["junta"] },
     { href: "/admin/trash", label: "Papelera", roles: ["junta"] },
   { href: "/admin/maintenance", label: "Mantenimiento", roles: ["junta"] },
+    { href: "/admin/audit", label: "Auditoría", roles: ["junta"] },
 ];
 
 export default function Sidebar({ user }: { user: UserMe | null }) {
