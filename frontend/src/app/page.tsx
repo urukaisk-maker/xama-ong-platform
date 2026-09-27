@@ -25,7 +25,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const download = async (kind: "pdf" | "csv") => {
+  const download = async (kind: "pdf" | "csv" | "xlsx") => {
     setDownloading(kind);
     try {
       if (kind === "pdf") {
@@ -33,10 +33,15 @@ export default function DashboardPage() {
           `/api/metrics/report.pdf?year=${year}`,
           `xama-informe-${year}.pdf`
         );
-      } else {
+      } else if (kind === "csv") {
         await downloadFile(
           `/api/metrics/export.csv?year=${year}`,
           `xama-informe-${year}.csv`
+        );
+      } else {
+        await downloadFile(
+          `/api/metrics/export.xlsx?year=${year}`,
+          `xama-informe-${year}.xlsx`
         );
       }
     } catch (e) {
@@ -48,23 +53,30 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         {canDownload && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => download("csv")}
               disabled={downloading !== null}
               className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:opacity-50"
             >
-              {downloading === "csv" ? "Generando…" : "Exportar CSV"}
+              {downloading === "csv" ? "…" : "CSV"}
+            </button>
+            <button
+              onClick={() => download("xlsx")}
+              disabled={downloading !== null}
+              className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+            >
+              {downloading === "xlsx" ? "…" : "Excel"}
             </button>
             <button
               onClick={() => download("pdf")}
               disabled={downloading !== null}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50"
             >
-              {downloading === "pdf" ? "Generando…" : "Descargar informe PDF"}
+              {downloading === "pdf" ? "…" : "PDF"}
             </button>
           </div>
         )}

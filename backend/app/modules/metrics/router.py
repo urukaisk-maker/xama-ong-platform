@@ -65,3 +65,25 @@ async def export_pdf(
             "Content-Disposition": f'attachment; filename="xama-informe-{year}.pdf"'
         },
     )
+
+
+# ─── Excel ───
+@router.get("/export.xlsx")
+async def export_xlsx(
+    year: int = Query(default_factory=lambda: datetime.now(timezone.utc).year),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role(*REPORT_ROLES)),
+):
+    from app.modules.metrics.exporters.excel_export import build_excel
+
+    data = await service.export_pdf_data(db, year)
+    xlsx_bytes = build_excel(data)
+    return Response(
+        content=xlsx_bytes,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
+        headers={
+            "Content-Disposition": f'attachment; filename="xama-informe-{year}.xlsx"'
+        },
+    )
