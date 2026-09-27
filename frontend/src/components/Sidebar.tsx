@@ -22,6 +22,7 @@ const LINKS: LinkItem[] = [
   { href: "/volunteers", label: "Voluntarios", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
     { href: "/admin/users", label: "Usuarios", roles: ["junta"] },
   { href: "/admin/analytics", label: "Analítica", roles: ["junta"] },
+  { href: "/admin/trash", label: "Papelera", roles: ["junta"] },
 ];
 
 export default function Sidebar({ user }: { user: UserMe | null }) {
