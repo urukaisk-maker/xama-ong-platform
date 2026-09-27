@@ -23,8 +23,8 @@ async def get_current_user(
     )
     try:
         payload = decode_token(token)
-    except ValueError:
-        raise credentials_error
+    except ValueError as e:
+        raise credentials_error from e
 
     sub = payload.get("sub")
     if not sub:
@@ -32,8 +32,8 @@ async def get_current_user(
 
     try:
         user_id = uuid.UUID(sub)
-    except ValueError:
-        raise credentials_error
+    except ValueError as e:
+        raise credentials_error from e
 
     user = await service.get_user_by_id(db, user_id)
     if user is None or not user.active:

@@ -14,7 +14,6 @@ router = APIRouter(prefix="/api/nevera", tags=["nevera"])
 COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
 
 
-# ─── Rations ───
 @router.get("/rations", response_model=list[schemas.RationRead])
 async def list_rations(
     from_date: date | None = Query(None),
@@ -61,7 +60,6 @@ async def ration_summary(
     return await service.ration_summary(db, from_date, to_date)
 
 
-# ─── Derivations ───
 @router.get("/derivations", response_model=list[schemas.DerivationRead])
 async def list_derivations(
     status_filter: str | None = Query(None, alias="status"),
@@ -84,7 +82,7 @@ async def create_derivation(
     try:
         return await service.create_derivation(db, payload)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.patch(
@@ -99,7 +97,7 @@ async def serve_derivation(
     try:
         derivation = await service.serve_derivation(db, derivation_id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if derivation is None:
         raise HTTPException(status_code=404, detail="Derivación no encontrada")
     return derivation

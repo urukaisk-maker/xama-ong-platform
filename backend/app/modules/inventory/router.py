@@ -9,7 +9,6 @@ from app.modules.inventory import schemas, service
 router = APIRouter(prefix="/api/inventory", tags=["inventory"])
 
 
-# ─── Products ───
 @router.get("/products", response_model=list[schemas.ProductRead])
 async def list_products(db: AsyncSession = Depends(get_db)):
     return await service.list_products(db)
@@ -26,7 +25,6 @@ async def create_product(
     return await service.create_product(db, payload)
 
 
-# ─── Batches ───
 @router.get("/batches", response_model=list[schemas.BatchRead])
 async def list_batches(db: AsyncSession = Depends(get_db)):
     return await service.list_batches(db)
@@ -59,13 +57,12 @@ async def consume_batch(
     try:
         batch = await service.consume_batch(db, batch_id, payload.quantity)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if batch is None:
         raise HTTPException(status_code=404, detail="Lote no encontrado")
     return batch
 
 
-# ─── Summary ───
 @router.get("/summary", response_model=schemas.InventorySummary)
 async def summary(
     days: int = Query(7, ge=1, le=60), db: AsyncSession = Depends(get_db)

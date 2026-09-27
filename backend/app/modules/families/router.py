@@ -10,7 +10,6 @@ from app.modules.families import schemas, service
 router = APIRouter(prefix="/api", tags=["families"])
 
 
-# ─── Families ───
 @router.get("/families", response_model=list[schemas.FamilyRead])
 async def list_families(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
@@ -31,7 +30,7 @@ async def create_family(
     try:
         return await service.create_family(db, payload)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/families/{family_id}", response_model=schemas.FamilyRead)
@@ -59,11 +58,10 @@ async def family_summary(db: AsyncSession = Depends(get_db)):
     return await service.get_family_summary(db)
 
 
-# ─── Deliveries ───
 @router.get("/deliveries", response_model=list[schemas.DeliveryRead])
 async def list_deliveries(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
-        target_date: date | None = Query(None),
+    target_date: date | None = Query(None),
     status_filter: str | None = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),
 ):
@@ -81,7 +79,7 @@ async def create_delivery(
     try:
         return await service.create_delivery(db, payload)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.patch("/deliveries/{delivery_id}/check-in", response_model=schemas.DeliveryRead)
@@ -93,7 +91,7 @@ async def check_in(
     try:
         delivery = await service.check_in_delivery(db, delivery_id, payload)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if delivery is None:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     return delivery
