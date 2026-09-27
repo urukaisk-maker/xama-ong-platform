@@ -1,356 +1,378 @@
+# 🌱 XAMA-ONG Platform
+
+![CI](https://github.com/urukaisk-maker/xama-ong-platform/actions/workflows/ci.yml/badge.svg)
+![Tests](https://img.shields.io/badge/tests-32%20passed-brightgreen)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+![Node](https://img.shields.io/badge/node-20-green)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
+> Plataforma Integral de gestión logística para ONG dedicadas a la
+> recuperación de alimentos y su distribución a familias en situación
+> de vulnerabilidad.
+
+![Portada pública de XAMA-ONG](docs/screenshots/home.png)
 
 ---
 
-## 2. Script de datos de prueba
+## 📖 Tabla de contenidos
 
-```bash
-cat > ~/setup-seed.sh <<'SCRIPT_EOF'
-#!/usr/bin/env bash
-set -e
+- [¿Qué es?](#-qué-es)
+- [Características](#-características)
+- [Stack tecnológico](#-stack-tecnológico)
+- [Inicio rápido](#-inicio-rápido)
+- [Estructura](#-estructura-del-proyecto)
+- [Módulos](#-módulos)
+- [Roles y permisos](#-roles-y-permisos)
+- [API REST](#-api-rest)
+- [Datos de prueba](#-datos-de-prueba)
+- [Tests](#-tests)
+- [Despliegue](#-despliegue)
+- [Código abierto](#-código-abierto)
+- [Desarrollador](#-desarrollador)
+- [Licencia](#-licencia)
 
-ROOT="$HOME/proyectos/xama-ong-platform"
-cd "$ROOT"
+---
 
-mkdir -p backend/scripts
-touch backend/scripts/__init__.py
+## 🌱 ¿Qué es?
 
-cat > backend/scripts/seed.py <<'PYEOF'
-"""Script de datos de prueba para XAMA-ONG Platform.
+**XAMA-ONG Platform** es una plataforma web de código abierto pensada para
+centralizar toda la operativa diaria de una ONG dedicada a la recuperación
+de alimentos:
 
-Uso:
+- **Recogida de excedentes** de comercios, agricultores y empresas.
+- **Control de caducidades** con sistema FeFo (First Expire First Out).
+- **Repartos semanales** a familias en situación de vulnerabilidad.
+- **Gestión de voluntariado** con turnos, roles y horas acreditadas.
+- **Nevera Solidària** con raciones diarias y derivaciones puntuales.
+- **Métricas de impacto** para Asamblea, subvenciones y empresas donantes.
+
+Además, incluye una **portada pública** desde la que cualquier persona o
+empresa puede:
+
+- Conocer el impacto real (contadores animados en tiempo real).
+- Donar por Bizum o transferencia bancaria.
+- Descargar el certificado fiscal de donación (Ley 49/2002).
+- Solicitar ser voluntario.
+
+### 🎯 ¿Para quién es?
+
+- **Bancos de alimentos** y entidades de reparto.
+- **Comedores sociales** con excedentes recuperados.
+- **Asociaciones vecinales** con proyectos de recuperación alimentaria.
+- **Cualquier ONG** que gestione inventario, voluntariado y beneficiarios.
+
+**Es código abierto.** Si eres otra ONG y te sirve, puedes clonarlo,
+adaptarlo y ponerlo en marcha sin coste de licencia.
+
+---
+
+## ✨ Características
+
+### Backend
+- 🔐 **Autenticación JWT** con 5 roles diferenciados.
+- 📦 **Inventario** con trazabilidad de lotes y control FeFo.
+- 👨‍👩‍👧 **Familias beneficiarias** con fichas y restricciones dietéticas.
+- 🚚 **Repartos** con check-in en puerta desde móvil/tablet.
+- 🤝 **Voluntariado** con turnos Reus / Tarragona y ranking de horas.
+- 🍽 **Nevera Solidària** con raciones diarias y derivaciones.
+- 📊 **Métricas de impacto** con exportación CSV, Excel y PDF.
+- 📄 **Certificados PDF** de voluntariado y de donación fiscal.
+- 🔍 **Auditoría** con registro de quién hizo qué y cuándo.
+- 🗑 **Papelera** con restauración y borrado masivo.
+- 📥 **Importación CSV** de familias.
+- 📧 **Notificaciones** automáticas de caducidades por email.
+
+### Frontend
+- 🎨 **Diseño consistente** con design tokens centralizados.
+- 🌙 **Modo oscuro** en toda la aplicación interna.
+- ⚡ **SSG/ISR** en la portada pública (carga ~50ms).
+- 📊 **Panel de analítica** con gráficos interactivos (Recharts).
+- 🔔 **Toasts** para feedback visual de acciones.
+- 📱 **Responsive** (móvil, tablet, escritorio).
+- ♿ **Accesibilidad** con focus visible y navegación por teclado.
+
+---
+
+## 🛠 Stack tecnológico
+
+| Capa | Tecnología |
+|------|------------|
+| **Frontend** | Next.js 14 · React 18 · TypeScript · Tailwind CSS |
+| **UI** | Lucide Icons · Recharts · Sonner (toasts) |
+| **Backend** | FastAPI · Python 3.12 · SQLAlchemy 2.0 (async) |
+| **Base de datos** | PostgreSQL 16 |
+| **Cache** | Redis 7 |
+| **Migraciones** | Alembic |
+| **Contenedores** | Docker · Docker Compose |
+| **CI/CD** | GitHub Actions (ruff + pytest + next build) |
+| **Tests** | pytest · 32 tests |
+| **Lint** | ruff |
+| **Deploy** | Cloudflare Tunnel (opcional) |
+
+---
+
+## 🚀 Inicio rápido
+
+### Requisitos
+
+- Docker y Docker Compose instalados
+- Puertos libres: 3100 (web), 8100 (api), 8080 (adminer opcional)
+
+### Instalación
+
+1. Clonar el repositorio:
+
+   git clone https://github.com/urukaisk-maker/xama-ong-platform.git
+   cd xama-ong-platform
+
+2. Configurar entorno:
+
+   cp .env.example .env
+
+3. Generar SECRET_KEY:
+
+   openssl rand -hex 32
+
+4. Editar el archivo .env y ajustar POSTGRES_PASSWORD y SECRET_KEY.
+
+5. Levantar todo:
+
+   docker compose up -d
+
+6. Esperar ~15s a que arranque y verificar:
+
+   docker compose ps
+
+### Accesos
+
+| Servicio | URL |
+|----------|-----|
+| **Portada pública** | http://localhost:3100/public |
+| **Frontend app** | http://localhost:3100 |
+| **API docs (Swagger)** | http://localhost:8100/docs |
+| **Adminer (DB UI)** | http://localhost:8080 |
+
+### Credenciales por defecto
+
+| Rol | Email | Password |
+|-----|-------|----------|
+| Junta | admin@xama.local | admin1234 |
+| Coordinador Reus | coord.reus@xama.local | coord1234 |
+| Coordinador Tarragona | coord.tarragona@xama.local | coord1234 |
+| Servicios Sociales | ss@xama.local | ss1234 |
+| Voluntario Reus | vol.reus1@xama.local | vol1234 |
+| Voluntario Tarragona | vol.tgn1@xama.local | vol1234 |
+
+---
+
+## 📁 Estructura del proyecto
+
+    xama-ong-platform/
+    ├── .github/workflows/        # CI (ruff + pytest + next build)
+    ├── backend/                  # FastAPI + SQLAlchemy async
+    │   ├── app/
+    │   │   ├── core/             # config, seguridad JWT
+    │   │   ├── db/               # engine async, base declarativa
+    │   │   └── modules/
+    │   │       ├── auth/         # login, roles, usuarios
+    │   │       ├── inventory/    # productos, lotes, FeFo
+    │   │       ├── families/     # familias, entregas, check-in
+    │   │       ├── volunteers/   # turnos, asignaciones, horas
+    │   │       ├── nevera/       # raciones, derivaciones
+    │   │       ├── metrics/      # KPIs, informes PDF/CSV/Excel
+    │   │       ├── donations/    # certificados de donación
+    │   │       ├── notifications/# emails de caducidades
+    │   │       ├── audit/        # log de acciones
+    │   │       ├── admin/        # papelera, mantenimiento
+    │   │       └── public/       # estadísticas públicas
+    │   ├── alembic/              # migraciones
+    │   ├── scripts/              # seed, check_expiring
+    │   └── tests/                # 32 tests con pytest
+    ├── frontend/                 # Next.js 14 App Router
+    │   ├── src/
+    │   │   ├── app/              # páginas
+    │   │   ├── components/       # componentes reutilizables
+    │   │   └── lib/              # api client, tipos, config
+    │   └── public/               # assets estáticos
+    ├── database/                 # init.sql (esquema inicial)
+    ├── docs/                     # documentación
+    └── docker-compose.yml
+
+---
+
+## 📦 Módulos
+
+### 1. Autenticación y usuarios
+Login JWT, 5 roles, gestión de usuarios desde el panel de administración.
+
+### 2. Inventario y trazabilidad
+Registro de productos y lotes con control FeFo. Alertas de caducidades.
+
+### 3. Familias y repartos
+Fichas familiares con adultos, menores y restricciones alimentarias.
+
+### 4. Voluntariado y cuadrantes
+Turnos por sede (Reus / Tarragona), roles por jornada, ranking de horas.
+
+### 5. Nevera Solidària
+Control de raciones diarias (~20 objetivo) y derivaciones puntuales.
+
+### 6. Métricas e informes
+KPIs en tiempo real: kg recuperados, CO₂ evitado, familias atendidas.
+
+### 7. Certificados de donación
+Generación de certificados fiscales (Ley 49/2002) para donantes.
+
+### 8. Administración
+Auditoría, papelera, mantenimiento masivo.
+
+---
+
+## 🔒 Roles y permisos
+
+| Rol | Acceso |
+|-----|--------|
+| **junta** | Todo el sistema + gestión de usuarios + auditoría + mantenimiento |
+| **coordinador_reus** | Su sede: inventario, familias, entregas, turnos, métricas |
+| **coordinador_tarragona** | Ídem para Tarragona |
+| **voluntario** | Entregas (check-in), Cuadrantes (apuntarse), Nevera |
+| **servicios_sociales** | Solo Nevera (crear derivaciones) |
+
+---
+
+## 🌐 API REST
+
+Todos los endpoints están documentados en Swagger:
+
+**http://localhost:8100/docs**
+
+### Ejemplos de uso
+
+Login:
+
+    curl -X POST http://localhost:8100/api/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email":"admin@xama.local","password":"admin1234"}'
+
+Inventario (con token):
+
+    curl http://localhost:8100/api/inventory/summary \
+      -H "Authorization: Bearer $TOKEN"
+
+Lotes que caducan pronto:
+
+    curl "http://localhost:8100/api/inventory/batches/expiring-soon?days=7" \
+      -H "Authorization: Bearer $TOKEN"
+
+Estadísticas públicas (sin auth):
+
+    curl http://localhost:8100/api/public/stats
+
+---
+
+## 🌱 Datos de prueba
+
+Para poblar la base de datos con contenido realista:
+
     docker compose exec xama-api python -m scripts.seed
-"""
-import asyncio
-import random
-import uuid
-from datetime import date, datetime, time, timedelta, timezone
 
-from sqlalchemy import select
+Esto crea:
 
-from app.core.security import hash_password
-from app.db.session import SessionLocal
-from app.modules.families.models import Delivery, Family
-from app.modules.inventory.models import Batch, Product
-from app.modules.nevera.models import Derivation, NeveraRation
-from app.modules.users.models import Role, User
-from app.modules.volunteers.models import Shift, ShiftAssignment
+- **35 usuarios** (admin, 2 coordinadores, 1 servicios sociales, 31 voluntarios)
+- **30 familias** (15 Reus + 15 Tarragona)
+- **20 productos** típicos
+- **80 lotes** con fechas de caducidad variadas
+- **~45 entregas** de los últimos 7 días
+- **14 días de raciones Nevera**
+- **10 derivaciones** de Servicios Sociales
+- **56 turnos** (7 días × 2 sedes × 4 roles)
+- **~80 asignaciones** de voluntarios
 
-random.seed(42)
+---
 
-# ─── Datos realistas ───
-PRODUCTOS = [
-    ("Manzanas", "fruta", "kg"),
-    ("Plátanos", "fruta", "kg"),
-    ("Naranjas", "fruta", "kg"),
-    ("Tomates", "verdura", "kg"),
-    ("Lechuga", "verdura", "unidad"),
-    ("Zanahorias", "verdura", "kg"),
-    ("Patatas", "verdura", "kg"),
-    ("Cebollas", "verdura", "kg"),
-    ("Pan de molde", "panaderia", "unidad"),
-    ("Baguettes", "panaderia", "unidad"),
-    ("Croissants", "bolleria", "unidad"),
-    ("Leche entera", "lacteos", "litro"),
-    ("Yogur natural", "lacteos", "unidad"),
-    ("Queso tierno", "lacteos", "kg"),
-    ("Arroz", "granos", "kg"),
-    ("Pasta", "granos", "kg"),
-    ("Lentejas", "legumbres", "kg"),
-    ("Garbanzos", "legumbres", "kg"),
-    ("Atún en lata", "conservas", "unidad"),
-    ("Aceite de oliva", "aceites", "litro"),
-]
+## ✅ Tests
 
-ORIGENES = [
-    "comercio_local",
-    "donacion_corporativa",
-    "excedente_agricola",
-    "comida_cocinada",
-    "campana_solidaria",
-]
+    # Todos los tests
+    docker compose exec xama-api pytest
 
-NOMBRES = [
-    "Ana", "María", "Carmen", "Lucía", "Sofía", "Marta", "Laura", "Elena",
-    "Javier", "Carlos", "Miguel", "David", "José", "Antonio", "Pablo", "Sergio",
-    "Nuria", "Cristina", "Patricia", "Isabel", "Rocío", "Silvia", "Raquel", "Beatriz",
-]
+    # Con cobertura
+    docker compose exec xama-api pytest --cov=app --cov-report=term-missing
 
-APELLIDOS = [
-    "García", "Martínez", "López", "Sánchez", "Rodríguez", "Fernández", "Gómez",
-    "Ruiz", "Díaz", "Torres", "Vázquez", "Ramos", "Moreno", "Jiménez", "Álvarez",
-    "Romero", "Hernández", "Castro", "Ortega", "Rubio",
-]
+    # Lint
+    docker compose exec xama-api ruff check .
 
-CALLES = [
-    "Carrer Major", "Avinguda de Roma", "Carrer de Sant Joan", "Rambla Nova",
-    "Carrer de l'Estació", "Plaça Prim", "Carrer Ample", "Carrer de la Pau",
-    "Avinguda de la Pau", "Carrer Nou",
-]
+**32 tests** cubriendo:
 
+- Autenticación (8)
+- Familias (5)
+- Inventario (6)
+- Métricas (4)
+- Nevera (4)
+- Voluntariado (5)
 
-def random_name() -> str:
-    return f"{random.choice(NOMBRES)} {random.choice(APELLIDOS)}"
+---
 
+## 🚢 Despliegue
 
-async def seed():
-    async with SessionLocal() as db:
-        # Verificar si ya hay datos
-        existing = await db.scalar(select(User).limit(1))
-        if existing is not None:
-            print("⚠️  Ya hay datos en la DB. Abortando para no duplicar.")
-            print("   Para empezar limpio: docker compose down -v")
-            return
+Ver [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) para la guía completa.
 
-        print("→ Creando roles...")
-        roles_map = {}
-        for name in [
-            "junta",
-            "coordinador_reus",
-            "coordinador_tarragona",
-            "voluntario",
-            "servicios_sociales",
-        ]:
-            r = Role(name=name)
-            db.add(r)
-            await db.flush()
-            roles_map[name] = r.id
-        await db.commit()
-        print(f"  ✓ {len(roles_map)} roles")
+**Resumen:**
 
-        # ─── Usuarios ───
-        print("→ Creando usuarios...")
-        users = []
+1. **VPS** (Hetzner, DigitalOcean) + **Cloudflare Tunnel** = ~5€/mes
+2. **Dominio propio** (~10€/año) con HTTPS automático
+3. **Backups automáticos** diarios a las 3:00 AM
+4. **Monitorización** con Uptime Kuma + Healthchecks
 
-        admin = User(
-            email="admin@xama.local",
-            password_hash=hash_password("admin1234"),
-            full_name="Administrador XAMA",
-            role_id=roles_map["junta"],
-            site=None,
-            active=True,
-        )
-        db.add(admin)
-        users.append(admin)
+---
 
-        coord_reus = User(
-            email="coord.reus@xama.local",
-            password_hash=hash_password("coord1234"),
-            full_name="Coordinador Reus",
-            role_id=roles_map["coordinador_reus"],
-            site="reus",
-            active=True,
-        )
-        coord_tgn = User(
-            email="coord.tarragona@xama.local",
-            password_hash=hash_password("coord1234"),
-            full_name="Coordinador Tarragona",
-            role_id=roles_map["coordinador_tarragona"],
-            site="tarragona",
-            active=True,
-        )
-        ss = User(
-            email="ss@xama.local",
-            password_hash=hash_password("ss1234"),
-            full_name="Servicios Sociales",
-            role_id=roles_map["servicios_sociales"],
-            site=None,
-            active=True,
-        )
-        db.add_all([coord_reus, coord_tgn, ss])
-        await db.commit()
+## 🤝 Código abierto
 
-        # 31 voluntarios: 16 Reus + 15 Tarragona
-        for i in range(16):
-            u = User(
-                email=f"vol.reus{i + 1}@xama.local",
-                password_hash=hash_password("vol1234"),
-                full_name=random_name(),
-                role_id=roles_map["voluntario"],
-                site="reus",
-                active=True,
-            )
-            db.add(u)
-            users.append(u)
+Este proyecto es **código abierto bajo licencia MIT**. Fue creado por
+un desarrollador freelance para digitalizar la operativa de una ONG
+real en Reus (Tarragona).
 
-        for i in range(15):
-            u = User(
-                email=f"vol.tgn{i + 1}@xama.local",
-                password_hash=hash_password("vol1234"),
-                full_name=random_name(),
-                role_id=roles_map["voluntario"],
-                site="tarragona",
-                active=True,
-            )
-            db.add(u)
-            users.append(u)
+**Si eres otra ONG y quieres usarlo:**
 
-        await db.commit()
-        print(f"  ✓ {len(users) + 3} usuarios (admin, 2 coord, 1 ss, 31 voluntarios)")
+1. Clona el repositorio
+2. Adapta los textos y datos en `frontend/src/lib/site-config.ts`
+3. Cambia los colores si quieres (todo está centralizado)
+4. Despliega donde quieras (VPS, Vercel, Railway)
+5. Disfruta. Y si mejoras algo, compártelo.
 
-        # ─── Productos y lotes ───
-        print("→ Creando productos y lotes...")
-        products = []
-        for name, cat, unit in PRODUCTOS:
-            p = Product(name=name, category=cat, unit=unit)
-            db.add(p)
-            products.append(p)
-        await db.commit()
+**¿Quieres contribuir?** Mira [CONTRIBUTING.md](CONTRIBUTING.md).
 
-        batches = []
-        today = date.today()
-        for _ in range(80):
-            p = random.choice(products)
-            days_offset = random.choice([2, 3, 5, 7, 10, 14, 20, 30, 45, 60])
-            b = Batch(
-                product_id=p.id,
-                origin=random.choice(ORIGENES),
-                quantity=round(random.uniform(1, 40), 2),
-                expiry_date=today + timedelta(days=days_offset),
-                status="disponible",
-            )
-            db.add(b)
-            batches.append(b)
-        await db.commit()
-        print(f"  ✓ {len(products)} productos, {len(batches)} lotes")
+---
 
-        # ─── Familias ───
-        print("→ Creando familias...")
-        familias = []
-        for i in range(30):
-            site = "reus" if i < 15 else "tarragona"
-            fam = Family(
-                reference_code=f"FAM-{100 + i:03d}",
-                address=f"{random.choice(CALLES)} {random.randint(1, 150)}, {site.capitalize()}",
-                phone=f"6{random.randint(10000000, 99999999)}",
-                adults=random.randint(1, 4),
-                minors=random.randint(0, 4),
-                site=site,
-                active=True,
-                dietary_restrictions=random.choice(
-                    [None, None, None, "Sin gluten", "Sin lactosa", "Vegetariana", "Alergia a frutos secos"]
-                ),
-            )
-            db.add(fam)
-            familias.append(fam)
-        await db.commit()
-        print(f"  ✓ {len(familias)} familias")
+## 👨‍💻 Desarrollador
 
-        # ─── Entregas de los últimos 7 días ───
-        print("→ Creando entregas...")
-        deliveries = []
-        for days_ago in range(7):
-            target_date = today - timedelta(days=days_ago)
-            for fam in random.sample(familias, random.randint(4, 10)):
-                status = "entregada" if days_ago > 0 or random.random() > 0.4 else "pendiente"
-                d = Delivery(
-                    family_id=fam.id,
-                    delivery_date=target_date,
-                    site=fam.site,
-                    status=status,
-                    checked_in_at=datetime.now(timezone.utc) if status == "entregada" else None,
-                )
-                db.add(d)
-                deliveries.append(d)
-        await db.commit()
-        print(f"  ✓ {len(deliveries)} entregas")
+**Manuel Casimiro Carrasco**
+Desarrollador Web · Reus, Tarragona (España)
 
-        # ─── Raciones Nevera de los últimos 14 días ───
-        print("→ Creando raciones Nevera...")
-        for days_ago in range(14):
-            target_date = today - timedelta(days=days_ago)
-            target = 20
-            served = random.randint(14, 22)
-            n = NeveraRation(
-                date=target_date,
-                target_rations=target,
-                served_rations=served,
-            )
-            db.add(n)
-        await db.commit()
-        print("  ✓ 14 días de raciones")
+> "Nuestra visión es tu visión: imaginamos las visiones que tú estás
+> imaginando y hacemos que se conviertan en realidad, y lo hacemos bien."
 
-        # ─── Derivaciones ───
-        print("→ Creando derivaciones...")
-        origenes = ["servicios_sociales", "policia_local", "cruz_roja", "voluntario", "otro"]
-        for i in range(10):
-            status = random.choice(["pendiente", "servida", "servida", "servida"])
-            d = Derivation(
-                reference_code=f"DER-{200 + i:03d}",
-                person_name=random.choice([None, random_name()]),
-                origin=random.choice(origenes),
-                reason=random.choice(
-                    ["Persona sin hogar", "Urgencia familiar", "Caso derivado SS", "Atención puntual"]
-                ),
-                rations=random.randint(1, 4),
-                status=status,
-                served_at=datetime.now(timezone.utc) if status == "servida" else None,
-            )
-            db.add(d)
-        await db.commit()
-        print("  ✓ 10 derivaciones")
+- 🌐 Portfolio: [silly-boba-dc057e.netlify.app](https://silly-boba-dc057e.netlify.app/)
+- 💼 Proyecto 1: [rad-dolphin-182dfb.netlify.app](https://rad-dolphin-182dfb.netlify.app/)
+- 💼 Proyecto 2: [unique-biscochitos-31bcea.netlify.app](https://unique-biscochitos-31bcea.netlify.app/)
+- 📧 Contacto: [a través del portfolio](https://silly-boba-dc057e.netlify.app/)
 
-        # ─── Turnos de la semana ───
-        print("→ Creando turnos...")
-        roles_turno = ["vehiculo", "clasificacion", "cestas", "puerta"]
-        turns = []
-        for days_offset in range(0, 7):
-            shift_date = today + timedelta(days=days_offset)
-            for site in ["reus", "tarragona"]:
-                for role in roles_turno:
-                    s = Shift(
-                        shift_date=shift_date,
-                        site=site,
-                        role=role,
-                        start_time=time(9, 0),
-                        end_time=time(13, 0),
-                        capacity=random.randint(2, 4),
-                    )
-                    db.add(s)
-                    turns.append(s)
-        await db.commit()
-        print(f"  ✓ {len(turns)} turnos")
+**¿Tienes un proyecto en mente?** Escríbeme.
 
-        # ─── Asignaciones de algunos turnos ───
-        print("→ Asignando voluntarios...")
-        vol_reus = [u for u in users if u.site == "reus"]
-        vol_tgn = [u for u in users if u.site == "tarragona"]
-        assigned = 0
-        for s in turns:
-            pool = vol_reus if s.site == "reus" else vol_tgn
-            num = random.randint(0, min(s.capacity, len(pool)))
-            for u in random.sample(pool, num):
-                a = ShiftAssignment(
-                    shift_id=s.id,
-                    user_id=u.id,
-                    hours=round(random.uniform(2, 4), 1) if random.random() > 0.5 else None,
-                    attended=random.random() > 0.4,
-                )
-                db.add(a)
-                assigned += 1
-        await db.commit()
-        print(f"  ✓ {assigned} asignaciones")
+---
 
-        print()
-        print("=" * 60)
-        print("  ✅ DATOS DE PRUEBA CREADOS")
-        print("=" * 60)
-        print()
-        print("Credenciales:")
-        print("  admin@xama.local           / admin1234    (junta)")
-        print("  coord.reus@xama.local      / coord1234    (coordinador_reus)")
-        print("  coord.tarragona@xama.local / coord1234    (coordinador_tarragona)")
-        print("  ss@xama.local              / ss1234       (servicios_sociales)")
-        print("  vol.reus1@xama.local       / vol1234      (voluntario Reus)")
-        print("  vol.tgn1@xama.local        / vol1234      (voluntario Tarragona)")
-        print()
+## 📄 Licencia
 
+MIT © 2026 [Manuel Casimiro Carrasco](https://silly-boba-dc057e.netlify.app/)
 
-if __name__ == "__main__":
-    asyncio.run(seed())
-PYEOF
+Consulta [LICENSE](LICENSE) para más detalles.
 
-echo "✅ Script seed creado"
-SCRIPT_EOF
+---
 
-chmod +x ~/setup-seed.sh
-bash ~/setup-seed.sh
+<div align="center">
+
+**Hecho con voluntad y código abierto** 🌱
+
+[⬆ Volver arriba](#-xama-ong-platform)
+
+</div>
