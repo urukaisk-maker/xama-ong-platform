@@ -34,12 +34,12 @@ jobs:
       - name: Run tests
         working-directory: ./backend
         env:
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
-          REDIS_URL: redis://localhost:6379
-          SECRET_KEY: test_secret_ci
-          JWT_ALGORITHM: HS256
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+          REDIS_URL: "redis://localhost:6379"
+          SECRET_KEY: "test_secret_ci"
+          JWT_ALGORITHM: "HS256"
           ACCESS_TOKEN_EXPIRE_MINUTES: "30"
-          ENVIRONMENT: test
+          ENVIRONMENT: "test"
         run: pytest --tb=short -q
 
   frontend:
@@ -61,5 +61,5 @@ jobs:
       - name: Build
         working-directory: ./frontend
         env:
-          NEXT_PUBLIC_API_URL: http://localhost:8100
+          NEXT_PUBLIC_API_URL: "http://localhost:8100"
         run: npm run build
