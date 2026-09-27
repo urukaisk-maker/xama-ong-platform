@@ -1,7 +1,9 @@
+cat > ~/proyectos/xama-ong-platform/frontend/src/app/public/page.tsx <<'EOF'
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import DeveloperModal from "@/components/DeveloperModal";
 import { SITE_CONFIG } from "@/lib/site-config";
 
 type Stats = {
@@ -21,6 +23,7 @@ const { ong, developer } = SITE_CONFIG;
 
 export default function PublicPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [devOpen, setDevOpen] = useState(false);
 
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
@@ -328,32 +331,30 @@ export default function PublicPage() {
             </div>
           </div>
 
-          {/* Desarrollador */}
+          {/* Desarrollador — clic abre modal */}
           <div className="mt-12 border-t border-slate-800 pt-8">
-            <div className="rounded-lg bg-slate-800/50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Desarrollado por
-              </p>
-              <p className="mt-1 text-lg font-bold text-white">
-                {developer.name}
-              </p>
-              <p className="text-sm text-slate-400">
-                {developer.role} · {developer.location}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                {developer.projects.map((p) => (
-                  <a
-                    key={p.url}
-                    href={p.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white"
-                  >
-                    {p.label} →
-                  </a>
-                ))}
+            <button
+              onClick={() => setDevOpen(true)}
+              className="group w-full rounded-lg bg-slate-800/50 p-5 text-left transition hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              aria-label={`Ver más sobre ${developer.name}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Desarrollado por
+                  </p>
+                  <p className="mt-1 text-lg font-bold text-white group-hover:text-emerald-300">
+                    {developer.name}
+                  </p>
+                  <p className="text-sm text-slate-400">
+                    {developer.role} · {developer.location}
+                  </p>
+                </div>
+                <span className="hidden rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs font-medium text-emerald-400 transition group-hover:border-emerald-600 group-hover:bg-emerald-950 sm:inline-block">
+                  Ver perfil →
+                </span>
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-800 pt-6 text-center text-xs text-slate-400 md:flex-row md:text-left">
@@ -363,18 +364,19 @@ export default function PublicPage() {
             </p>
             <p>
               Hecho con voluntad y código abierto por{" "}
-              <a
-                href={developer.projects[0]?.url ?? "#"}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                onClick={() => setDevOpen(true)}
                 className="text-emerald-400 hover:text-emerald-300"
               >
                 {developer.name}
-              </a>
+              </button>
             </p>
           </div>
         </div>
       </footer>
+
+      {/* ─── Modal del desarrollador ─── */}
+      <DeveloperModal open={devOpen} onClose={() => setDevOpen(false)} />
     </main>
   );
 }
@@ -661,3 +663,4 @@ function DonationCertificateForm() {
     </div>
   );
 }
+EOF
