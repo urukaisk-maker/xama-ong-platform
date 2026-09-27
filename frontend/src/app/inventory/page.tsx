@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
+import { useUser } from "@/components/AuthGuard";
 import { api } from "@/lib/api";
 import type { Batch, Product } from "@/lib/types";
+
+const COORD_ROLES = ["junta", "coordinador_reus", "coordinador_tarragona"];
 
 function daysUntil(dateStr: string): number {
   const d = new Date(dateStr);
@@ -16,6 +20,10 @@ export default function InventoryPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+
+  const { user } = useUser();
+  const canDelete =
+    user?.role_name != null && COORD_ROLES.includes(user.role_name);
 
   const load = async () => {
     setLoading(true);
@@ -34,6 +42,11 @@ export default function InventoryPage() {
 
   const productName = (id: string) =>
     products.find((p) => p.id === id)?.name ?? "—";
+
+  const deleteBatch = async (id: string) => {
+    await api(`/api/inventory/batches/${id}`, { method: "DELETE" });
+    load();
+  };
 
   return (
     <AppShell>
@@ -71,6 +84,7 @@ export default function InventoryPage() {
                 <th className="px-4 py-3">Cantidad</th>
                 <th className="px-4 py-3">Caducidad</th>
                 <th className="px-4 py-3">Estado</th>
+                {canDelete && <th className="px-4 py-3"></th>}
               </tr>
             </thead>
             <tbody className="dark:text-slate-200">
@@ -114,13 +128,23 @@ export default function InventoryPage() {
                         {b.status}
                       </span>
                     </td>
+                    {canDelete && (
+                      <td className="px-4 py-3 text-right">
+                        <ConfirmDelete
+                          title="¿Borrar este lote?"
+                          message={`${productName(b.product_id)} · ${b.quantity} · caduca el ${b.expiry_date}. Esta acción no se puede deshacer.`}
+                          onConfirm={() => deleteBatch(b.id)}
+                          trigger={TrashIcon}
+                        />
+                      </td>
+                    )}
                   </tr>
                 );
               })}
               {batches.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={canDelete ? 6 : 5}
                     className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                   >
                     Sin lotes

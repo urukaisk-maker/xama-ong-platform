@@ -1,7 +1,9 @@
+cat > ~/proyectos/xama-ong-platform/frontend/src/app/families/page.tsx <<'TSXEOF'
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import { api, downloadFile, getToken } from "@/lib/api";
 import type { Family } from "@/lib/types";
 
@@ -48,6 +50,11 @@ export default function FamiliesPage() {
   useEffect(() => {
     load();
   }, [siteFilter]);
+
+  const deleteFamily = async (id: string) => {
+    await api(`/api/families/${id}`, { method: "DELETE" });
+    load();
+  };
 
   const inputCls =
     "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
@@ -118,6 +125,7 @@ export default function FamiliesPage() {
                 <th className="px-4 py-3">Contacto</th>
                 <th className="px-4 py-3">Restricciones</th>
                 <th className="px-4 py-3">Estado</th>
+                {canImport && <th className="px-4 py-3"></th>}
               </tr>
             </thead>
             <tbody className="dark:text-slate-200">
@@ -149,12 +157,22 @@ export default function FamiliesPage() {
                       {f.active ? "activa" : "inactiva"}
                     </span>
                   </td>
+                  {canImport && (
+                    <td className="px-4 py-3 text-right">
+                      <ConfirmDelete
+                        title="¿Borrar esta familia?"
+                        message={`${f.reference_code} · ${f.adults + f.minors} personas. Si tiene entregas, se desactivará en lugar de borrar.`}
+                        onConfirm={() => deleteFamily(f.id)}
+                        trigger={TrashIcon}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))}
               {families.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={canImport ? 8 : 7}
                     className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                   >
                     Sin familias
@@ -570,3 +588,4 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
     </form>
   );
 }
+TSXEOF
