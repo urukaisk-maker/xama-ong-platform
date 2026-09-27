@@ -16,10 +16,9 @@ type Stats = {
   tarragona_families: number;
 };
 
-// ─── Configuración editable ───
 const DONATION_CONFIG = {
-  bizumPhone: "600 000 000", // ← CAMBIAR por el número real de XAMA
-  iban: "ES00 0000 0000 0000 0000 0000", // ← CAMBIAR por el IBAN real
+  bizumPhone: "600 000 000",
+  iban: "ES00 0000 0000 0000 0000 0000",
   ibanHolder: "XAMA ONG",
   email: "hola@xamaong.cat",
   bankName: "CaixaBank",
@@ -99,73 +98,19 @@ export default function PublicPage() {
       <section className="mx-auto max-w-6xl px-6 pb-16">
         {stats ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard
-              icon="🥕"
-              value={stats.total_kg_recovered}
-              decimals={0}
-              suffix=" kg"
-              label="Alimentos recuperados"
-              color="emerald"
-            />
-            <StatCard
-              icon="🌱"
-              value={stats.co2_avoided_kg}
-              decimals={0}
-              suffix=" kg"
-              label="CO₂ evitado"
-              color="green"
-            />
-            <StatCard
-              icon="🍽"
-              value={stats.nevera_served}
-              decimals={0}
-              label="Raciones Nevera"
-              color="amber"
-            />
-            <StatCard
-              icon="👥"
-              value={stats.total_people}
-              decimals={0}
-              label="Personas atendidas"
-              color="slate"
-            />
-            <StatCard
-              icon="🏠"
-              value={stats.total_families}
-              decimals={0}
-              label="Familias"
-              color="emerald"
-            />
-            <StatCard
-              icon="🤝"
-              value={stats.total_volunteers}
-              decimals={0}
-              label="Voluntarios"
-              color="green"
-            />
-            <StatCard
-              icon="⏱"
-              value={stats.total_volunteer_hours}
-              decimals={1}
-              suffix=" h"
-              label="Horas aportadas"
-              color="slate"
-            />
-            <StatCard
-              icon="📍"
-              value={stats.reus_families + stats.tarragona_families}
-              decimals={0}
-              label="Familias activas"
-              color="amber"
-            />
+            <StatCard icon="🥕" value={stats.total_kg_recovered} decimals={0} suffix=" kg" label="Alimentos recuperados" color="emerald" />
+            <StatCard icon="🌱" value={stats.co2_avoided_kg} decimals={0} suffix=" kg" label="CO₂ evitado" color="green" />
+            <StatCard icon="🍽" value={stats.nevera_served} decimals={0} label="Raciones Nevera" color="amber" />
+            <StatCard icon="👥" value={stats.total_people} decimals={0} label="Personas atendidas" color="slate" />
+            <StatCard icon="🏠" value={stats.total_families} decimals={0} label="Familias" color="emerald" />
+            <StatCard icon="🤝" value={stats.total_volunteers} decimals={0} label="Voluntarios" color="green" />
+            <StatCard icon="⏱" value={stats.total_volunteer_hours} decimals={1} suffix=" h" label="Horas aportadas" color="slate" />
+            <StatCard icon="📍" value={stats.reus_families + stats.tarragona_families} decimals={0} label="Familias activas" color="amber" />
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="h-32 animate-pulse rounded-xl bg-slate-100"
-              />
+              <div key={i} className="h-32 animate-pulse rounded-xl bg-slate-100" />
             ))}
           </div>
         )}
@@ -187,21 +132,13 @@ export default function PublicPage() {
             </p>
           </div>
 
-          {/* Importes sugeridos */}
           <div className="mb-10 grid grid-cols-2 gap-4 md:grid-cols-4">
             <ImpactCard amount="10€" desc="25 kg de alimentos recuperados" />
             <ImpactCard amount="25€" desc="1 cesta semanal para una familia" />
-            <ImpactCard
-              amount="50€"
-              desc="Raciones Nevera para 10 personas"
-            />
-            <ImpactCard
-              amount="100€"
-              desc="Reparto completo para 5 familias"
-            />
+            <ImpactCard amount="50€" desc="Raciones Nevera para 10 personas" />
+            <ImpactCard amount="100€" desc="Reparto completo para 5 familias" />
           </div>
 
-          {/* Métodos de donación */}
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Bizum */}
             <div className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-white p-8 shadow-sm">
@@ -224,10 +161,7 @@ export default function PublicPage() {
                 <div className="mb-3 font-mono text-xl font-bold tracking-wider text-slate-900">
                   {DONATION_CONFIG.bizumPhone}
                 </div>
-                <CopyButton
-                  value={DONATION_CONFIG.bizumPhone}
-                  label="Copiar número"
-                />
+                <CopyButton value={DONATION_CONFIG.bizumPhone} label="Copiar número" />
               </div>
 
               <p className="mt-4 text-xs text-slate-500">
@@ -257,10 +191,7 @@ export default function PublicPage() {
                   <div className="mb-2 break-all font-mono text-sm font-semibold text-slate-900">
                     {DONATION_CONFIG.iban}
                   </div>
-                  <CopyButton
-                    value={DONATION_CONFIG.iban}
-                    label="Copiar IBAN"
-                  />
+                  <CopyButton value={DONATION_CONFIG.iban} label="Copiar IBAN" />
                 </div>
                 <div className="border-t border-slate-200 pt-3">
                   <div className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -278,6 +209,9 @@ export default function PublicPage() {
               </p>
             </div>
           </div>
+
+          {/* ─── Certificado de donación ─── */}
+          <DonationCertificateForm />
 
           {/* Empresas / mecenazgo */}
           <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
@@ -298,7 +232,6 @@ export default function PublicPage() {
             </a>
           </div>
 
-          {/* Nota fiscal */}
           <p className="mt-8 text-center text-xs text-slate-500">
             XAMA-ONG es una asociación sin ánimo de lucro. Las donaciones son
             deducibles fiscalmente según la Ley 49/2002. Emitimos certificados
@@ -308,10 +241,7 @@ export default function PublicPage() {
       </section>
 
       {/* ─── VOLUNTARIADO ─── */}
-      <section
-        id="voluntariado"
-        className="border-t border-slate-100 bg-slate-50"
-      >
+      <section id="voluntariado" className="border-t border-slate-100 bg-slate-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-slate-900 md:text-4xl">
@@ -351,21 +281,9 @@ export default function PublicPage() {
           Cómo funciona
         </h2>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <Step
-            num="01"
-            title="Recogemos"
-            desc="Comercios, agricultores y empresas nos avisan de sus excedentes. Nuestros voluntarios los recogen en furgoneta."
-          />
-          <Step
-            num="02"
-            title="Clasificamos"
-            desc="En el almacén revisamos el estado de cada producto, controlamos caducidades y preparamos las cestas."
-          />
-          <Step
-            num="03"
-            title="Repartimos"
-            desc="Cada semana, familias de Reus y Tarragona vienen a recoger su cesta. Sin colas, sin papeles, con dignidad."
-          />
+          <Step num="01" title="Recogemos" desc="Comercios, agricultores y empresas nos avisan de sus excedentes. Nuestros voluntarios los recogen en furgoneta." />
+          <Step num="02" title="Clasificamos" desc="En el almacén revisamos el estado de cada producto, controlamos caducidades y preparamos las cestas." />
+          <Step num="03" title="Repartimos" desc="Cada semana, familias de Reus y Tarragona vienen a recoger su cesta. Sin colas, sin papeles, con dignidad." />
         </div>
       </section>
 
@@ -402,19 +320,13 @@ export default function PublicPage() {
               </h3>
               <ul className="space-y-1 text-sm">
                 <li>
-                  <a href="#donar" className="hover:text-white">
-                    Donar
-                  </a>
+                  <a href="#donar" className="hover:text-white">Donar</a>
                 </li>
                 <li>
-                  <a href="#voluntariado" className="hover:text-white">
-                    Voluntariado
-                  </a>
+                  <a href="#voluntariado" className="hover:text-white">Voluntariado</a>
                 </li>
                 <li>
-                  <Link href="/login" className="hover:text-white">
-                    Acceso voluntarios
-                  </Link>
+                  <Link href="/login" className="hover:text-white">Acceso voluntarios</Link>
                 </li>
                 <li>
                   <a
@@ -430,8 +342,7 @@ export default function PublicPage() {
             </div>
           </div>
           <div className="mt-10 border-t border-slate-800 pt-6 text-center text-xs text-slate-400">
-            © {new Date().getFullYear()} XAMA-ONG · Hecho con voluntad y
-            código abierto
+            © {new Date().getFullYear()} XAMA-ONG · Hecho con voluntad y código abierto
           </div>
         </div>
       </footer>
@@ -441,14 +352,7 @@ export default function PublicPage() {
 
 /* ─── Componentes ─── */
 
-function StatCard({
-  icon,
-  value,
-  decimals,
-  suffix,
-  label,
-  color,
-}: {
+function StatCard({ icon, value, decimals, suffix, label, color }: {
   icon: string;
   value: number;
   decimals: number;
@@ -491,7 +395,6 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
       const ta = document.createElement("textarea");
       ta.value = value;
       document.body.appendChild(ta);
@@ -513,20 +416,220 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-function Step({
-  num,
-  title,
-  desc,
-}: {
-  num: string;
-  title: string;
-  desc: string;
-}) {
+function Step({ num, title, desc }: { num: string; title: string; desc: string }) {
   return (
     <div>
       <div className="mb-3 text-sm font-bold text-emerald-600">{num}</div>
       <h3 className="mb-2 text-lg font-bold text-slate-900">{title}</h3>
       <p className="text-sm text-slate-600">{desc}</p>
+    </div>
+  );
+}
+
+/* ─── Formulario del certificado de donación ─── */
+function DonationCertificateForm() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const [data, setData] = useState({
+    donor_name: "",
+    donor_tax_id: "",
+    amount: 25,
+    donation_date: new Date().toISOString().slice(0, 10),
+    concept: "Donación puntual",
+    donor_address: "",
+    recurring: false,
+  });
+
+  const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8100";
+
+  const download = async () => {
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(`${API}/api/donations/certificate.pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Error ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `certificado-donacion-${data.donor_tax_id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setDone(true);
+      setTimeout(() => setDone(false), 4000);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Error al generar el certificado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-10 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-6 md:p-8">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-xl">
+          📄
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">
+            ¿Ya has donado? Descarga tu certificado
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Genera el certificado fiscal de tu donación (Ley 49/2002) para
+            deducirla en tu declaración.
+          </p>
+        </div>
+      </div>
+
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-md bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700"
+        >
+          Generar certificado
+        </button>
+      ) : (
+        <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <label className="text-sm">
+              <span className="mb-1 block font-medium text-slate-700">
+                Nombre completo / Razón social *
+              </span>
+              <input
+                value={data.donor_name}
+                onChange={(e) => setData({ ...data, donor_name: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Maria García López"
+                required
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1 block font-medium text-slate-700">
+                DNI / NIE / CIF *
+              </span>
+              <input
+                value={data.donor_tax_id}
+                onChange={(e) => setData({ ...data, donor_tax_id: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                placeholder="12345678Z"
+                required
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1 block font-medium text-slate-700">
+                Importe (€) *
+              </span>
+              <input
+                type="number"
+                min="1"
+                step="0.01"
+                value={data.amount}
+                onChange={(e) => setData({ ...data, amount: Number(e.target.value) })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                required
+              />
+            </label>
+
+            <label className="text-sm">
+              <span className="mb-1 block font-medium text-slate-700">
+                Fecha de la donación *
+              </span>
+              <input
+                type="date"
+                value={data.donation_date}
+                onChange={(e) => setData({ ...data, donation_date: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                required
+              />
+            </label>
+
+            <label className="text-sm md:col-span-2">
+              <span className="mb-1 block font-medium text-slate-700">
+                Domicilio (opcional)
+              </span>
+              <input
+                value={data.donor_address}
+                onChange={(e) => setData({ ...data, donor_address: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Carrer Major 12, Reus"
+              />
+            </label>
+
+            <label className="text-sm md:col-span-2">
+              <span className="mb-1 block font-medium text-slate-700">
+                Concepto
+              </span>
+              <input
+                value={data.concept}
+                onChange={(e) => setData({ ...data, concept: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                placeholder="Donación puntual"
+              />
+            </label>
+
+            <label className="flex items-center gap-2 text-sm md:col-span-2">
+              <input
+                type="checkbox"
+                checked={data.recurring}
+                onChange={(e) => setData({ ...data, recurring: e.target.checked })}
+                className="h-4 w-4"
+              />
+              <span className="text-slate-700">
+                Es una donación recurrente (mensual)
+              </span>
+            </label>
+          </div>
+
+          {err && (
+            <div className="rounded-md bg-rose-50 p-2 text-sm text-rose-700">
+              {err}
+            </div>
+          )}
+
+          {done && (
+            <div className="rounded-md bg-emerald-100 p-2 text-sm text-emerald-800">
+              ✓ Certificado descargado
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={download}
+              disabled={loading || !data.donor_name || !data.donor_tax_id || !data.amount}
+              className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {loading ? "Generando…" : "Descargar certificado PDF"}
+            </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+                setErr(null);
+                setDone(false);
+              }}
+              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
