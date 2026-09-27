@@ -1,4 +1,3 @@
-cat > ~/proyectos/xama-ong-platform/frontend/src/app/public/page.tsx <<'EOF'
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -35,7 +34,6 @@ export default function PublicPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white">
-      {/* ─── Nav ─── */}
       <nav className="sticky top-0 z-10 border-b border-emerald-100 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
@@ -61,7 +59,6 @@ export default function PublicPage() {
         </div>
       </nav>
 
-      {/* ─── Hero ─── */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 text-center md:pt-24">
         <div className="mb-4 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-medium text-emerald-800">
           {ong.address}
@@ -92,7 +89,6 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── Contadores ─── */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         {stats ? (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -114,7 +110,6 @@ export default function PublicPage() {
         )}
       </section>
 
-      {/* ─── DONAR ─── */}
       <section id="donar" className="border-t border-emerald-100 bg-emerald-50/50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -226,7 +221,6 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── VOLUNTARIADO ─── */}
       <section id="voluntariado" className="border-t border-slate-100 bg-slate-50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -261,7 +255,6 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── Cómo funciona ─── */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="mb-12 text-center text-3xl font-bold text-slate-900 md:text-4xl">
           Cómo funciona
@@ -273,11 +266,9 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── Footer ─── */}
       <footer className="border-t border-slate-200 bg-slate-900 py-14 text-slate-300">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-            {/* ONG */}
             <div className="md:col-span-2">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 font-bold text-white">
@@ -296,7 +287,6 @@ export default function PublicPage() {
               </ul>
             </div>
 
-            {/* Enlaces */}
             <div>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">
                 Enlaces
@@ -318,7 +308,6 @@ export default function PublicPage() {
               </ul>
             </div>
 
-            {/* Legal */}
             <div>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white">
                 Legal
@@ -331,7 +320,6 @@ export default function PublicPage() {
             </div>
           </div>
 
-          {/* Desarrollador — clic abre modal */}
           <div className="mt-12 border-t border-slate-800 pt-8">
             <button
               onClick={() => setDevOpen(true)}
@@ -375,13 +363,10 @@ export default function PublicPage() {
         </div>
       </footer>
 
-      {/* ─── Modal del desarrollador ─── */}
       <DeveloperModal open={devOpen} onClose={() => setDevOpen(false)} />
     </main>
   );
 }
-
-/* ─── Componentes ─── */
 
 function StatCard({ icon, value, decimals, suffix, label, color }: {
   icon: string;
@@ -663,4 +648,3 @@ function DonationCertificateForm() {
     </div>
   );
 }
-EOF
