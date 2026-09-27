@@ -205,3 +205,134 @@ async def export_csv_data(db: AsyncSession, year: int) -> dict:
 
 async def export_pdf_data(db: AsyncSession, year: int) -> dict:
     return await export_csv_data(db, year)
+
+
+async def get_analytics(db: AsyncSession, year: int) -> dict:
+    """Datos agregados para el panel de analítica."""
+    from app.modules.volunteers.models import Shift, ShiftAssignment
+
+    # ─── Serie mensual ───
+    kg_stmt = (
+        select(
+            extract("month", Batch.created_at).label("m"),
+            func.coalesce(func.sum(Batch.quantity), 0).label("kg"),
+        )
+        .where(extract("year", Batch.created_at) == year)
+        .group_by("m")
+    )
+    kg_rows = {int(r._mapping["m"]): float(r._mapping["kg"]) for r in (await db.execute(kg_stmt)).all()}
+
+    del_stmt = (
+        select(
+            extract("month", Delivery.created_at).label("m"),
+            func.count(Delivery.id).label("c"),
+        )
+        .where(extract("year", Delivery.created_at) == year)
+        .group_by("m")
+    )
+    del_rows = {int(r._mapping["m"]): int(r._mapping["c"]) for r in (await db.execute(del_stmt)).all()}
+
+    nev_stmt = (
+        select(
+            extract("month", NeveraRation.date).label("m"),
+            func.coalesce(func.sum(NeveraRation.served_rations), 0).label("c"),
+        )
+        .where(extract("year", NeveraRation.date) == year)
+        .group_by("m")
+    )
+    nev_rows = {int(r._mapping["m"]): int(r._mapping["c"]) for r in (await db.execute(nev_stmt)).all()}
+
+    hrs_stmt = (
+        select(
+            extract("month", ShiftAssignment.created_at).label("m"),
+            func.coalesce(func.sum(ShiftAssignment.hours), 0).label("h"),
+        )
+        .where(extract("year", ShiftAssignment.created_at) == year)
+        .group_by("m")
+    )
+    hrs_rows = {int(r._mapping["m"]): float(r._mapping["h"]) for r in (await db.execute(hrs_stmt)).all()}
+
+    monthly = [
+        {
+            "month": m,
+            "year": year,
+            "kg_recovered": kg_rows.get(m, 0.0),
+            "deliveries": del_rows.get(m, 0),
+            "nevera_served": nev_rows.get(m, 0),
+            "volunteer_hours": hrs_rows.get(m, 0.0),
+        }
+        for m in range(1, 13)
+    ]
+
+    # ─── Comparativa por sede ───
+    sites = []
+    for site in ("reus", "tarragona"):
+        fam = await db.scalar(
+            select(func.count(Family.id)).where(Family.site == site)
+        ) or 0
+        ppl = await db.scalar(
+            select(func.coalesce(func.sum(Family.adults + Family.minors), 0))
+            .where(Family.site == site)
+        ) or 0
+        done = await db.scalar(
+            select(func.count(Delivery.id))
+            .where(Delivery.site == site)
+            .where(Delivery.status == "entregada")
+        ) or 0
+        pend = await db.scalar(
+            select(func.count(Delivery.id))
+            .where(Delivery.site == site)
+            .where(Delivery.status == "pendiente")
+        ) or 0
+        sites.append({
+            "site": site,
+            "families": int(fam),
+            "people": int(ppl),
+            "deliveries_done": int(done),
+            "deliveries_pending": int(pend),
+        })
+
+    # ─── Top voluntarios ───
+    vol_stmt = (
+        select(
+            User.id,
+            User.full_name,
+            func.coalesce(func.sum(ShiftAssignment.hours), 0).label("hours"),
+            func.count(ShiftAssignment.id).label("shifts"),
+        )
+        .join(ShiftAssignment, ShiftAssignment.user_id == User.id, isouter=True)
+        .where(ShiftAssignment.attended.is_(True))
+        .group_by(User.id, User.full_name)
+        .order_by(func.coalesce(func.sum(ShiftAssignment.hours), 0).desc())
+        .limit(10)
+    )
+    top_volunteers = [
+        {
+            "user_id": str(r._mapping["id"]),
+            "full_name": r._mapping["full_name"],
+            "hours": float(r._mapping["hours"] or 0),
+            "shifts": int(r._mapping["shifts"] or 0),
+        }
+        for r in (await db.execute(vol_stmt)).all()
+    ]
+
+    # ─── Distribución de entregas por estado ───
+    status_stmt = (
+        select(
+            Delivery.status,
+            func.count(Delivery.id).label("c"),
+        )
+        .group_by(Delivery.status)
+    )
+    delivery_status = [
+        {"status": r._mapping["status"], "count": int(r._mapping["c"])}
+        for r in (await db.execute(status_stmt)).all()
+    ]
+
+    return {
+        "year": year,
+        "monthly": monthly,
+        "sites": sites,
+        "top_volunteers": top_volunteers,
+        "delivery_status": delivery_status,
+    }

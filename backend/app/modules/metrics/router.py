@@ -87,3 +87,12 @@ async def export_xlsx(
             "Content-Disposition": f'attachment; filename="xama-informe-{year}.xlsx"'
         },
     )
+
+
+@router.get("/analytics", response_model=schemas.AnalyticsResponse)
+async def analytics(
+    year: int = Query(default_factory=lambda: datetime.now(timezone.utc).year),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role("junta")),
+):
+    return await service.get_analytics(db, year)

@@ -51,3 +51,41 @@ class MonthlyPoint(BaseModel):
 class MonthlySeries(BaseModel):
     year: int
     points: list[MonthlyPoint]
+
+
+# ─── Analytics ───
+class AnalyticsMonthlyPoint(BaseModel):
+    month: int
+    year: int
+    kg_recovered: float
+    deliveries: int
+    nevera_served: int
+    volunteer_hours: float
+
+
+class AnalyticsSiteComparison(BaseModel):
+    site: str
+    families: int
+    people: int
+    deliveries_done: int
+    deliveries_pending: int
+
+
+class AnalyticsVolunteer(BaseModel):
+    user_id: str
+    full_name: str
+    hours: float
+    shifts: int
+
+
+class AnalyticsDeliveryStatus(BaseModel):
+    status: str
+    count: int
+
+
+class AnalyticsResponse(BaseModel):
+    year: int
+    monthly: list[AnalyticsMonthlyPoint]
+    sites: list[AnalyticsSiteComparison]
+    top_volunteers: list[AnalyticsVolunteer]
+    delivery_status: list[AnalyticsDeliveryStatus]

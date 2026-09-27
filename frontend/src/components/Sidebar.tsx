@@ -20,7 +20,8 @@ const LINKS: LinkItem[] = [
   { href: "/shifts", label: "Turnos", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
   { href: "/shifts/calendar", label: "Calendario", roles: ["junta", "coordinador_reus", "coordinador_tarragona", "voluntario"] },
   { href: "/volunteers", label: "Voluntarios", roles: ["junta", "coordinador_reus", "coordinador_tarragona"] },
-  { href: "/admin/users", label: "Usuarios", roles: ["junta"] },
+    { href: "/admin/users", label: "Usuarios", roles: ["junta"] },
+  { href: "/admin/analytics", label: "Analítica", roles: ["junta"] },
 ];
 
 export default function Sidebar({ user }: { user: UserMe | null }) {
