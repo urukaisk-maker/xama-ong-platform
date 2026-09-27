@@ -1,11 +1,13 @@
 from contextlib import asynccontextmanager
-from app.modules.admin.router import router as admin_router
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.modules.admin.maintenance import router as maintenance_router
+
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
+from app.modules.admin.maintenance import router as maintenance_router
+from app.modules.admin.router import router as admin_router
 from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.auth.service import ensure_default_admin
@@ -33,7 +35,7 @@ async def lifespan(app: FastAPI):
         await ensure_default_admin(db)
     yield
     await engine.dispose()
-app.include_router(maintenance_router)
+
 
 app = FastAPI(title="XAMA-ONG API", version="0.1.0", lifespan=lifespan)
 
@@ -45,6 +47,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ─── Routers ───
 app.include_router(auth_router)
 app.include_router(inventory_router)
 app.include_router(families_router)
@@ -54,6 +57,8 @@ app.include_router(metrics_router)
 app.include_router(public_router)
 app.include_router(audit_router)
 app.include_router(admin_router)
+app.include_router(maintenance_router)
+
 
 @app.get("/health", tags=["system"])
 async def health() -> dict:
