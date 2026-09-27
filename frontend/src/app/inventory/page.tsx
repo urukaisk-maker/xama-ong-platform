@@ -38,10 +38,12 @@ export default function InventoryPage() {
   return (
     <AppShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Inventario</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Inventario
+        </h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
         >
           {showForm ? "Cancelar" : "+ Nuevo lote"}
         </button>
@@ -58,11 +60,11 @@ export default function InventoryPage() {
       )}
 
       {loading ? (
-        <p className="text-slate-500">Cargando…</p>
+        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Origen</th>
@@ -71,25 +73,30 @@ export default function InventoryPage() {
                 <th className="px-4 py-3">Estado</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="dark:text-slate-200">
               {batches.map((b) => {
                 const days = daysUntil(b.expiry_date);
                 const soon = days <= 7 && days >= 0;
                 const expired = days < 0;
                 return (
-                  <tr key={b.id} className="border-t border-slate-100">
+                  <tr
+                    key={b.id}
+                    className="border-t border-slate-100 dark:border-slate-800"
+                  >
                     <td className="px-4 py-3 font-medium">
                       {productName(b.product_id)}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{b.origin}</td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                      {b.origin}
+                    </td>
                     <td className="px-4 py-3">{b.quantity}</td>
                     <td className="px-4 py-3">
                       <span
                         className={
                           expired
-                            ? "text-rose-600 font-medium"
+                            ? "font-medium text-rose-600 dark:text-rose-400"
                             : soon
-                            ? "text-amber-600 font-medium"
+                            ? "font-medium text-amber-600 dark:text-amber-400"
                             : ""
                         }
                       >
@@ -100,8 +107,8 @@ export default function InventoryPage() {
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs ${
                           b.status === "disponible"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-600"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
+                            : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {b.status}
@@ -112,7 +119,10 @@ export default function InventoryPage() {
               })}
               {batches.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
+                  >
                     Sin lotes
                   </td>
                 </tr>
@@ -176,22 +186,25 @@ function NewBatchForm({
     }
   };
 
+  const inputCls =
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="flex gap-2">
         <input
           placeholder="Nuevo producto…"
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={`flex-1 ${inputCls}`}
         />
         <button
           type="button"
           onClick={createProduct}
-          className="rounded-md bg-slate-100 px-3 py-2 text-sm hover:bg-slate-200"
+          className="rounded-md bg-slate-100 px-3 py-2 text-sm hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           Crear producto
         </button>
@@ -201,7 +214,7 @@ function NewBatchForm({
         <select
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
         >
           {products.map((p) => (
             <option key={p.id} value={p.id}>
@@ -213,7 +226,7 @@ function NewBatchForm({
         <select
           value={origin}
           onChange={(e) => setOrigin(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
         >
           <option value="comercio_local">Comercio local</option>
           <option value="donacion_corporativa">Donación corporativa</option>
@@ -228,7 +241,7 @@ function NewBatchForm({
           min="0.01"
           value={quantity}
           onChange={(e) => setQuantity(Number(e.target.value))}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
           placeholder="Cantidad"
         />
 
@@ -236,7 +249,7 @@ function NewBatchForm({
           type="date"
           value={expiry}
           onChange={(e) => setExpiry(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
           required
         />
       </div>
@@ -246,7 +259,7 @@ function NewBatchForm({
       <button
         type="submit"
         disabled={loading || !productId || !expiry}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50"
+        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
       >
         {loading ? "Guardando…" : "Crear lote"}
       </button>

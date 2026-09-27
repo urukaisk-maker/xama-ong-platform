@@ -39,13 +39,18 @@ export default function DeliveriesPage() {
     load();
   };
 
+  const inputCls =
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+
   return (
     <AppShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Entregas del día</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Entregas del día
+        </h1>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700"
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
         >
           {showForm ? "Cancelar" : "+ Nueva entrega"}
         </button>
@@ -67,7 +72,7 @@ export default function DeliveriesPage() {
         <select
           value={site}
           onChange={(e) => setSite(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
         >
           <option value="reus">Reus</option>
           <option value="tarragona">Tarragona</option>
@@ -76,35 +81,37 @@ export default function DeliveriesPage() {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
       {loading ? (
-        <p className="text-slate-500">Cargando…</p>
+        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {deliveries.map((d) => (
             <div
               key={d.id}
-              className={`rounded-xl border bg-white p-4 ${
+              className={`rounded-xl border bg-white p-4 dark:bg-slate-900 ${
                 d.status === "entregada"
-                  ? "border-emerald-200"
-                  : "border-slate-200"
+                  ? "border-emerald-200 dark:border-emerald-800"
+                  : "border-slate-200 dark:border-slate-800"
               }`}
             >
               <div className="mb-2 flex items-start justify-between">
                 <div>
-                  <p className="font-mono text-xs text-slate-500">
+                  <p className="font-mono text-xs text-slate-500 dark:text-slate-400">
                     {d.id.slice(0, 8)}
                   </p>
-                  <p className="font-semibold">{familyName(d.family_id)}</p>
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    {familyName(d.family_id)}
+                  </p>
                 </div>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs ${
                     d.status === "entregada"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
                   }`}
                 >
                   {d.status}
@@ -112,8 +119,9 @@ export default function DeliveriesPage() {
               </div>
 
               {d.checked_in_at && (
-                <p className="mb-2 text-xs text-slate-500">
-                  Entregada: {new Date(d.checked_in_at).toLocaleString("es-ES")}
+                <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
+                  Entregada:{" "}
+                  {new Date(d.checked_in_at).toLocaleString("es-ES")}
                 </p>
               )}
 
@@ -128,7 +136,9 @@ export default function DeliveriesPage() {
             </div>
           ))}
           {deliveries.length === 0 && (
-            <p className="text-slate-400">Sin entregas programadas</p>
+            <p className="text-slate-400 dark:text-slate-500">
+              Sin entregas programadas
+            </p>
           )}
         </div>
       )}
@@ -179,16 +189,19 @@ function NewDeliveryForm({
     }
   };
 
+  const inputCls =
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5"
+      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <select
           value={familyId}
           onChange={(e) => setFamilyId(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
           required
         >
           <option value="">Selecciona familia</option>
@@ -202,14 +215,14 @@ function NewDeliveryForm({
           type="date"
           value={deliveryDate}
           onChange={(e) => setDeliveryDate(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
           required
         />
         <input
           placeholder="Notas"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={inputCls}
         />
       </div>
 
@@ -218,7 +231,7 @@ function NewDeliveryForm({
       <button
         type="submit"
         disabled={loading || !familyId}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50"
+        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
       >
         {loading ? "Creando…" : "Crear entrega"}
       </button>
