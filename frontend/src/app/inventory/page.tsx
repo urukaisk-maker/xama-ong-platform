@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Plus, Package, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
-import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import { useUser } from "@/components/AuthGuard";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 import type { Batch, Product } from "@/lib/types";
 
@@ -27,13 +31,18 @@ export default function InventoryPage() {
 
   const load = async () => {
     setLoading(true);
-    const [b, p] = await Promise.all([
-      api<Batch[]>("/api/inventory/batches"),
-      api<Product[]>("/api/inventory/products"),
-    ]);
-    setBatches(b);
-    setProducts(p);
-    setLoading(false);
+    try {
+      const [b, p] = await Promise.all([
+        api<Batch[]>("/api/inventory/batches"),
+        api<Product[]>("/api/inventory/products"),
+      ]);
+      setBatches(b);
+      setProducts(p);
+    } catch {
+      toast.error("Error al cargar el inventario");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -45,21 +54,29 @@ export default function InventoryPage() {
 
   const deleteBatch = async (id: string) => {
     await api(`/api/inventory/batches/${id}`, { method: "DELETE" });
+    toast.success("Lote borrado");
     load();
   };
 
   return (
     <AppShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Inventario
-        </h1>
-        <button
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Inventario
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {batches.length} lote{batches.length === 1 ? "" : "s"} ·{" "}
+            {products.length} producto{products.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon={<Plus className="h-4 w-4" />}
           onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
         >
-          {showForm ? "Cancelar" : "+ Nuevo lote"}
-        </button>
+          {showForm ? "Cancelar" : "Nuevo lote"}
+        </Button>
       </div>
 
       {showForm && (
@@ -67,17 +84,20 @@ export default function InventoryPage() {
           products={products}
           onCreated={() => {
             setShowForm(false);
+            toast.success("Lote creado");
             load();
           }}
         />
       )}
 
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando inventario…" />
+      ) : batches.length === 0 ? (
+        <EmptyState />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Origen</th>
@@ -95,26 +115,32 @@ export default function InventoryPage() {
                 return (
                   <tr
                     key={b.id}
-                    className="border-t border-slate-100 dark:border-slate-800"
+                    className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                   >
                     <td className="px-4 py-3 font-medium">
                       {productName(b.product_id)}
                     </td>
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {b.origin}
+                      {b.origin.replace(/_/g, " ")}
                     </td>
-                    <td className="px-4 py-3">{b.quantity}</td>
+                    <td className="px-4 py-3 font-mono">{b.quantity}</td>
                     <td className="px-4 py-3">
                       <span
-                        className={
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${
                           expired
-                            ? "font-medium text-rose-600 dark:text-rose-400"
+                            ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
                             : soon
-                            ? "font-medium text-amber-600 dark:text-amber-400"
-                            : ""
-                        }
+                            ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                            : "text-slate-600 dark:text-slate-400"
+                        }`}
                       >
-                        {b.expiry_date} ({days} d)
+                        {(expired || soon) && (
+                          <AlertTriangle className="h-3 w-3" />
+                        )}
+                        {b.expiry_date}{" "}
+                        <span className="opacity-70">
+                          ({days >= 0 ? `+${days}` : days} d)
+                        </span>
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -141,21 +167,29 @@ export default function InventoryPage() {
                   </tr>
                 );
               })}
-              {batches.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={canDelete ? 6 : 5}
-                    className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
-                  >
-                    Sin lotes
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       )}
     </AppShell>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="mb-3 flex justify-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+          <Package className="h-8 w-8 text-slate-400" />
+        </div>
+      </div>
+      <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">
+        Sin lotes todavía
+      </h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Pulsa "Nuevo lote" para registrar tu primera entrada de alimentos.
+      </p>
+    </div>
   );
 }
 
@@ -173,6 +207,7 @@ function NewBatchForm({
   const [expiry, setExpiry] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [creatingProduct, setCreatingProduct] = useState(false);
 
   useEffect(() => {
     if (products.length && !productId) setProductId(products[0].id);
@@ -180,12 +215,20 @@ function NewBatchForm({
 
   const createProduct = async () => {
     if (!productName.trim()) return;
-    const p = await api<Product>("/api/inventory/products", {
-      method: "POST",
-      body: JSON.stringify({ name: productName, unit: "kg" }),
-    });
-    setProductId(p.id);
-    setProductName("");
+    setCreatingProduct(true);
+    try {
+      const p = await api<Product>("/api/inventory/products", {
+        method: "POST",
+        body: JSON.stringify({ name: productName, unit: "kg" }),
+      });
+      setProductId(p.id);
+      setProductName("");
+      toast.success(`Producto "${p.name}" creado`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al crear producto");
+    } finally {
+      setCreatingProduct(false);
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -211,35 +254,38 @@ function NewBatchForm({
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      className="mb-6 animate-slide-up space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="flex gap-2">
         <input
-          placeholder="Nuevo producto…"
+          placeholder="Nuevo producto (ej. Manzanas)"
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
           className={`flex-1 ${inputCls}`}
         />
-        <button
+        <Button
           type="button"
+          variant="outline"
+          loading={creatingProduct}
+          disabled={!productName.trim()}
           onClick={createProduct}
-          className="rounded-md bg-slate-100 px-3 py-2 text-sm hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         >
           Crear producto
-        </button>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <select
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
           className={inputCls}
         >
+          {products.length === 0 && <option value="">— sin productos —</option>}
           {products.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -280,13 +326,17 @@ function NewBatchForm({
 
       {err && <p className="text-sm text-rose-600">{err}</p>}
 
-      <button
-        type="submit"
-        disabled={loading || !productId || !expiry}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
-      >
-        {loading ? "Guardando…" : "Crear lote"}
-      </button>
+      <div className="flex gap-2">
+        <Button
+          type="submit"
+          variant="primary"
+          loading={loading}
+          disabled={!productId || !expiry}
+          icon={<Plus className="h-4 w-4" />}
+        >
+          {loading ? "Guardando…" : "Crear lote"}
+        </Button>
+      </div>
     </form>
   );
 }
