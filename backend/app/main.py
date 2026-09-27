@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+from app.modules.admin.router import router as admin_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -53,7 +53,7 @@ app.include_router(nevera_router)
 app.include_router(metrics_router)
 app.include_router(public_router)
 app.include_router(audit_router)
-
+app.include_router(admin_router)
 
 @app.get("/health", tags=["system"])
 async def health() -> dict:
