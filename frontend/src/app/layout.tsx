@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3100";
@@ -12,16 +13,9 @@ export const metadata: Metadata = {
   description:
     "Asociación sin ánimo de lucro dedicada a la recuperación de alimentos y su distribución a familias en situación de vulnerabilidad en Reus y Tarragona.",
   keywords: [
-    "XAMA",
-    "ONG",
-    "Reus",
-    "Tarragona",
-    "banco de alimentos",
-    "voluntariado",
-    "donaciones",
-    "nevera solidaria",
-    "recuperación alimentos",
-    "sostenibilidad",
+    "XAMA", "ONG", "Reus", "Tarragona", "banco de alimentos",
+    "voluntariado", "donaciones", "nevera solidaria",
+    "recuperación alimentos", "sostenibilidad",
   ],
   authors: [{ name: "XAMA-ONG" }],
   creator: "XAMA-ONG",
@@ -81,7 +75,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          toastOptions={{
+            style: {
+              fontFamily: "system-ui, -apple-system, sans-serif",
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }
