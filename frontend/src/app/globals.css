@@ -7,8 +7,18 @@
   --fg: #0f172a;
 }
 
+html.dark {
+  --bg: #020617;
+  --fg: #f1f5f9;
+}
+
 body {
   background: var(--bg);
   color: var(--fg);
   font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Transición suave al cambiar de tema */
+html {
+  transition: background-color 0.2s ease;
 }
