@@ -7,7 +7,7 @@ from app.modules.families.models import Delivery, Family
 from app.modules.inventory.models import Batch, Product
 from app.modules.metrics import schemas
 from app.modules.nevera.models import Derivation, NeveraRation
-from app.modules.users.models import Role, User
+from app.modules.users.models import User
 from app.modules.volunteers.models import Shift, ShiftAssignment
 
 CO2_FACTOR = 2.5
@@ -108,7 +108,10 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
         .where(extract("year", Batch.created_at) == year)
         .group_by("m")
     )
-    kg_rows = {int(r.m): float(r.kg) for r in (await db.execute(kg_stmt)).all()}
+    kg_rows = {
+        int(r._mapping["m"]): float(r._mapping["kg"])
+        for r in (await db.execute(kg_stmt)).all()
+    }
 
     del_stmt = (
         select(
@@ -118,7 +121,10 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
         .where(extract("year", Delivery.created_at) == year)
         .group_by("m")
     )
-    del_rows = {int(r.m): int(r.c) for r in (await db.execute(del_stmt)).all()}
+    del_rows = {
+        int(r._mapping["m"]): int(r._mapping["c"])
+        for r in (await db.execute(del_stmt)).all()
+    }
 
     nev_stmt = (
         select(
@@ -128,7 +134,10 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
         .where(extract("year", NeveraRation.date) == year)
         .group_by("m")
     )
-    nev_rows = {int(r.m): int(r.c) for r in (await db.execute(nev_stmt)).all()}
+    nev_rows = {
+        int(r._mapping["m"]): int(r._mapping["c"])
+        for r in (await db.execute(nev_stmt)).all()
+    }
 
     hrs_stmt = (
         select(
@@ -138,7 +147,10 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
         .where(extract("year", ShiftAssignment.created_at) == year)
         .group_by("m")
     )
-    hrs_rows = {int(r.m): float(r.h) for r in (await db.execute(hrs_stmt)).all()}
+    hrs_rows = {
+        int(r._mapping["m"]): float(r._mapping["h"])
+        for r in (await db.execute(hrs_stmt)).all()
+    }
 
     points = [
         schemas.MonthlyPoint(
@@ -155,18 +167,15 @@ async def get_monthly(db: AsyncSession, year: int) -> schemas.MonthlySeries:
     return schemas.MonthlySeries(year=year, points=points)
 
 
-# ─── Exportaciones ───
 async def export_csv_data(db: AsyncSession, year: int) -> dict:
-    """Devuelve un dict con toda la info para generar CSV."""
     impact = await get_impact(db)
     monthly = await get_monthly(db, year)
 
-    # ranking voluntarios
     stmt = (
         select(
-            User.full_name,
-            func.coalesce(func.sum(ShiftAssignment.hours), 0).label("h"),
-            func.count(ShiftAssignment.id).label("t"),
+            User.full_name.label("name"),
+            func.coalesce(func.sum(ShiftAssignment.hours), 0).label("hours"),
+            func.count(ShiftAssignment.id).label("shifts"),
         )
         .join(
             ShiftAssignment,
@@ -178,7 +187,11 @@ async def export_csv_data(db: AsyncSession, year: int) -> dict:
     )
     rows = (await db.execute(stmt)).all()
     volunteers = [
-        {"name": r.full_name, "hours": float(r.h or 0), "shifts": int(r.t or 0)}
+        {
+            "name": r._mapping["name"],
+            "hours": float(r._mapping["hours"] or 0),
+            "shifts": int(r._mapping["shifts"] or 0),
+        }
         for r in rows
     ]
 
@@ -191,5 +204,4 @@ async def export_csv_data(db: AsyncSession, year: int) -> dict:
 
 
 async def export_pdf_data(db: AsyncSession, year: int) -> dict:
-    """Lo mismo que CSV, pero preparado para PDF."""
     return await export_csv_data(db, year)
