@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Plus, UserX } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 import type { Role, User } from "@/lib/types";
 
@@ -26,7 +30,9 @@ export default function UsersAdminPage() {
       setRoles(r);
       setErr(null);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error");
+      const msg = e instanceof Error ? e.message : "Error";
+      setErr(msg);
+      toast.error("Error al cargar los usuarios");
     } finally {
       setLoading(false);
     }
@@ -49,23 +55,30 @@ export default function UsersAdminPage() {
   const roleName = (id: number | null) =>
     roles.find((r) => r.id === id)?.name ?? "—";
 
-  const deleteUser = async (id: string) => {
+  const deactivateUser = async (id: string, name: string) => {
     await api(`/api/auth/users/${id}`, { method: "DELETE" });
+    toast.success(`${name} desactivado`);
     load();
   };
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Usuarios
-        </h1>
-        <button
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Usuarios
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {users.length} usuario{users.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          icon={<Plus className="h-4 w-4" />}
           onClick={() => setShowForm(!showForm)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
         >
-          {showForm ? "Cancelar" : "+ Nuevo usuario"}
-        </button>
+          {showForm ? "Cancelar" : "Nuevo usuario"}
+        </Button>
       </div>
 
       {err && <p className="mb-4 text-rose-600">{err}</p>}
@@ -75,17 +88,18 @@ export default function UsersAdminPage() {
           roles={roles}
           onCreated={() => {
             setShowForm(false);
+            toast.success("Usuario creado");
             load();
           }}
         />
       )}
 
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando usuarios…" />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Email</th>
@@ -99,7 +113,7 @@ export default function UsersAdminPage() {
               {users.map((u) => (
                 <tr
                   key={u.id}
-                  className="border-t border-slate-100 dark:border-slate-800"
+                  className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                 >
                   <td className="px-4 py-3 font-medium">{u.full_name}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
@@ -124,8 +138,8 @@ export default function UsersAdminPage() {
                     {me?.id !== u.id && u.active && (
                       <ConfirmDelete
                         title="¿Desactivar este usuario?"
-                        message={`${u.full_name} (${u.email}) dejará de poder acceder. Es reversible desde la base de datos.`}
-                        onConfirm={() => deleteUser(u.id)}
+                        message={`${u.full_name} (${u.email}) dejará de poder acceder. Es reversible desde la papelera.`}
+                        onConfirm={() => deactivateUser(u.id, u.full_name)}
                         trigger={TrashIcon}
                         dangerLabel="Desactivar"
                       />
@@ -182,12 +196,12 @@ function NewUserForm({
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      className="mb-6 animate-slide-up space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <input
@@ -240,13 +254,14 @@ function NewUserForm({
 
       {err && <p className="text-sm text-rose-600">{err}</p>}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+        variant="primary"
+        loading={loading}
+        icon={<Plus className="h-4 w-4" />}
       >
         {loading ? "Creando…" : "Crear usuario"}
-      </button>
+      </Button>
     </form>
   );
 }
