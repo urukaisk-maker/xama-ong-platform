@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import { RotateCcw, Users, Home, Inbox } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 
 type TrashFamily = {
@@ -48,6 +52,7 @@ export default function TrashPage() {
       setErr(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Error");
+      toast.error("Error al cargar la papelera");
     } finally {
       setLoading(false);
     }
@@ -67,25 +72,27 @@ export default function TrashPage() {
     );
   }
 
-  const restoreFamily = async (id: string) => {
+  const restoreFamily = async (id: string, code: string) => {
     setRestoring(id);
     try {
       await api(`/api/admin/trash/restore/family/${id}`, { method: "POST" });
+      toast.success(`Familia ${code} restaurada`);
       load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Error");
     } finally {
       setRestoring(null);
     }
   };
 
-  const restoreUser = async (id: string) => {
+  const restoreUser = async (id: string, email: string) => {
     setRestoring(id);
     try {
       await api(`/api/admin/trash/restore/user/${id}`, { method: "POST" });
+      toast.success(`Usuario ${email} restaurado`);
       load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Error");
     } finally {
       setRestoring(null);
     }
@@ -104,33 +111,35 @@ export default function TrashPage() {
 
       {err && <p className="mb-4 text-rose-600">{err}</p>}
 
-      <div className="mb-6 flex gap-2 border-b border-slate-200 dark:border-slate-800">
+      <div className="mb-6 flex gap-1 border-b border-slate-200 dark:border-slate-800">
         <button
           onClick={() => setTab("families")}
-          className={`border-b-2 px-4 py-2 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition ${
             tab === "families"
-              ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+              ? "border-xama-600 text-xama-600 dark:text-xama-400"
               : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
-          Familias{" "}
+          <Home className="h-4 w-4" />
+          Familias
           {data && (
-            <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">
               {data.families.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setTab("users")}
-          className={`border-b-2 px-4 py-2 text-sm font-medium transition ${
+          className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition ${
             tab === "users"
-              ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
+              ? "border-xama-600 text-xama-600 dark:text-xama-400"
               : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
           }`}
         >
-          Usuarios{" "}
+          <Users className="h-4 w-4" />
+          Usuarios
           {data && (
-            <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800">
               {data.users.length}
             </span>
           )}
@@ -138,7 +147,7 @@ export default function TrashPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando papelera…" />
       ) : !data ? null : tab === "families" ? (
         <FamiliesTab
           families={data.families}
@@ -162,24 +171,17 @@ function FamiliesTab({
   restoring,
 }: {
   families: TrashFamily[];
-  onRestore: (id: string) => void;
+  onRestore: (id: string, code: string) => void;
   restoring: string | null;
 }) {
   if (families.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
-        <div className="mb-3 text-4xl">📭</div>
-        <p className="text-slate-500 dark:text-slate-400">
-          No hay familias en la papelera
-        </p>
-      </div>
-    );
+    return <EmptyState text="No hay familias en la papelera" />;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           <tr>
             <th className="px-4 py-3">Código</th>
             <th className="px-4 py-3">Sede</th>
@@ -193,7 +195,7 @@ function FamiliesTab({
           {families.map((f) => (
             <tr
               key={f.id}
-              className="border-t border-slate-100 dark:border-slate-800"
+              className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
             >
               <td className="px-4 py-3 font-mono text-xs">
                 {f.reference_code}
@@ -207,13 +209,15 @@ function FamiliesTab({
                 {f.phone ?? "—"}
               </td>
               <td className="px-4 py-3 text-right">
-                <button
-                  onClick={() => onRestore(f.id)}
-                  disabled={restoring === f.id}
-                  className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                <Button
+                  size="sm"
+                  variant="success"
+                  loading={restoring === f.id}
+                  icon={<RotateCcw className="h-3.5 w-3.5" />}
+                  onClick={() => onRestore(f.id, f.reference_code)}
                 >
-                  {restoring === f.id ? "Restaurando…" : "↻ Restaurar"}
-                </button>
+                  Restaurar
+                </Button>
               </td>
             </tr>
           ))}
@@ -229,24 +233,17 @@ function UsersTab({
   restoring,
 }: {
   users: TrashUser[];
-  onRestore: (id: string) => void;
+  onRestore: (id: string, email: string) => void;
   restoring: string | null;
 }) {
   if (users.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
-        <div className="mb-3 text-4xl">📭</div>
-        <p className="text-slate-500 dark:text-slate-400">
-          No hay usuarios en la papelera
-        </p>
-      </div>
-    );
+    return <EmptyState text="No hay usuarios en la papelera" />;
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           <tr>
             <th className="px-4 py-3">Nombre</th>
             <th className="px-4 py-3">Email</th>
@@ -259,7 +256,7 @@ function UsersTab({
           {users.map((u) => (
             <tr
               key={u.id}
-              className="border-t border-slate-100 dark:border-slate-800"
+              className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
             >
               <td className="px-4 py-3 font-medium">{u.full_name}</td>
               <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
@@ -268,18 +265,33 @@ function UsersTab({
               <td className="px-4 py-3 capitalize">{u.role_name ?? "—"}</td>
               <td className="px-4 py-3 capitalize">{u.site ?? "—"}</td>
               <td className="px-4 py-3 text-right">
-                <button
-                  onClick={() => onRestore(u.id)}
-                  disabled={restoring === u.id}
-                  className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
+                <Button
+                  size="sm"
+                  variant="success"
+                  loading={restoring === u.id}
+                  icon={<RotateCcw className="h-3.5 w-3.5" />}
+                  onClick={() => onRestore(u.id, u.email)}
                 >
-                  {restoring === u.id ? "Restaurando…" : "↻ Restaurar"}
-                </button>
+                  Restaurar
+                </Button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="mb-3 flex justify-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+          <Inbox className="h-8 w-8 text-slate-400" />
+        </div>
+      </div>
+      <p className="text-slate-500 dark:text-slate-400">{text}</p>
     </div>
   );
 }
