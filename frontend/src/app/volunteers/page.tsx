@@ -1,13 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import AppShell from "@/components/AppShell";
-import { api } from "@/lib/api";
+import { useUser } from "@/components/AuthGuard";
+import { api, downloadFile } from "@/lib/api";
 import type { HoursSummary } from "@/lib/types";
 
 export default function VolunteersPage() {
   const [data, setData] = useState<HoursSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const { user } = useUser();
+  const canDownloadForOthers =
+    user?.role_name === "junta" ||
+    user?.role_name === "coordinador_reus" ||
+    user?.role_name === "coordinador_tarragona";
 
   useEffect(() => {
     api<HoursSummary>("/api/volunteers/hours/summary")
@@ -16,9 +24,46 @@ export default function VolunteersPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const downloadMine = async () => {
+    setDownloading("me");
+    try {
+      await downloadFile(
+        "/api/volunteers/me/certificate.pdf",
+        "mi-certificado-xama.pdf"
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  const downloadFor = async (userId: string, name: string) => {
+    setDownloading(userId);
+    try {
+      await downloadFile(
+        `/api/volunteers/${userId}/certificate.pdf`,
+        `certificado-${name.replace(/\s+/g, "_")}.pdf`
+      );
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Error");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   return (
     <AppShell>
-      <h1 className="mb-6 text-2xl font-bold">Voluntariado</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Voluntariado</h1>
+        <button
+          onClick={downloadMine}
+          disabled={downloading !== null}
+          className="rounded-md bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {downloading === "me" ? "Generando…" : "Descargar mi certificado"}
+        </button>
+      </div>
 
       {loading && <p className="text-slate-500">Cargando…</p>}
       {err && <p className="text-rose-600">{err}</p>}
@@ -51,6 +96,7 @@ export default function VolunteersPage() {
                   <th className="px-4 py-3">Horas</th>
                   <th className="px-4 py-3">Turnos</th>
                   <th className="px-4 py-3">Asistidos</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -61,11 +107,29 @@ export default function VolunteersPage() {
                     <td className="px-4 py-3">{v.total_hours}</td>
                     <td className="px-4 py-3">{v.total_shifts}</td>
                     <td className="px-4 py-3">{v.shifts_attended}</td>
+                    <td className="px-4 py-3 text-right">
+                      {canDownloadForOthers && (
+                        <button
+                          onClick={() =>
+                            downloadFor(v.user_id, v.full_name)
+                          }
+                          disabled={downloading !== null}
+                          className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1 text-xs text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          {downloading === v.user_id
+                            ? "…"
+                            : "Certificado"}
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {data.ranking.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-6 text-center text-slate-400"
+                    >
                       Sin datos
                     </td>
                   </tr>

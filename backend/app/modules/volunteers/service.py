@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,7 @@ from app.modules.users.models import User
 from app.modules.volunteers import models, schemas
 
 
+# ─── Shifts ───
 async def list_shifts(
     db: AsyncSession,
     site: str | None = None,
@@ -40,9 +41,7 @@ async def get_shift(db: AsyncSession, shift_id: uuid.UUID) -> models.Shift | Non
     return result.scalar_one_or_none()
 
 
-async def create_shift(
-    db: AsyncSession, data: schemas.ShiftCreate
-) -> models.Shift:
+async def create_shift(db: AsyncSession, data: schemas.ShiftCreate) -> models.Shift:
     if data.end_time <= data.start_time:
         raise ValueError("La hora de fin debe ser posterior a la de inicio")
     shift = models.Shift(**data.model_dump())
@@ -81,16 +80,11 @@ async def assign_to_shift(
     shift = await get_shift(db, shift_id)
     if shift is None:
         raise ValueError("Turno no encontrado")
-
     if len(shift.assignments) >= shift.capacity:
         raise ValueError("El turno ya está completo")
-
-    existing = next(
-        (a for a in shift.assignments if a.user_id == user_id), None
-    )
+    existing = next((a for a in shift.assignments if a.user_id == user_id), None)
     if existing is not None:
         raise ValueError("Ya estás asignado a este turno")
-
     assignment = models.ShiftAssignment(
         shift_id=shift_id, user_id=user_id, notes=notes
     )
@@ -144,13 +138,11 @@ async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHou
             models.ShiftAssignment.attended.is_(True),
         )
     ) or 0
-
     total_shifts = await db.scalar(
         select(func.count(models.ShiftAssignment.id)).where(
             models.ShiftAssignment.user_id == user_id
         )
     ) or 0
-
     attended = await db.scalar(
         select(func.count(models.ShiftAssignment.id)).where(
             models.ShiftAssignment.user_id == user_id,
@@ -167,9 +159,7 @@ async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHou
     )
 
 
-async def hours_summary(
-    db: AsyncSession, limit: int = 20
-) -> schemas.HoursSummary:
+async def hours_summary(db: AsyncSession, limit: int = 20) -> schemas.HoursSummary:
     attended_case = case(
         (models.ShiftAssignment.attended.is_(True), 1), else_=0
     )
@@ -189,9 +179,7 @@ async def hours_summary(
             isouter=True,
         )
         .group_by(User.id, User.full_name)
-        .order_by(
-            func.coalesce(func.sum(models.ShiftAssignment.hours), 0).desc()
-        )
+        .order_by(func.coalesce(func.sum(models.ShiftAssignment.hours), 0).desc())
         .limit(limit)
     )
     result = await db.execute(stmt)
@@ -199,11 +187,11 @@ async def hours_summary(
 
     ranking = [
         schemas.VolunteerHours(
-            user_id=r.id,
-            full_name=r.full_name,
-            total_hours=float(r.total_hours or 0),
-            total_shifts=int(r.total_shifts or 0),
-            shifts_attended=int(r.attended_shifts or 0),
+            user_id=r._mapping["id"],
+            full_name=r._mapping["full_name"],
+            total_hours=float(r._mapping["total_hours"] or 0),
+            total_shifts=int(r._mapping["total_shifts"] or 0),
+            shifts_attended=int(r._mapping["attended_shifts"] or 0),
         )
         for r in rows
     ]
@@ -217,3 +205,41 @@ async def hours_summary(
         total_shifts_assigned=total_shifts,
         ranking=ranking,
     )
+
+
+async def certificate_data(
+    db: AsyncSession, user_id: uuid.UUID
+) -> dict:
+    """Recopila todos los datos necesarios para el certificado."""
+    user = await db.get(User, user_id)
+    if user is None:
+        raise ValueError("Usuario no encontrado")
+
+    hours_data = await my_hours(db, user_id)
+
+    # Fecha del primer turno asignado
+    first_shift = await db.scalar(
+        select(func.min(models.Shift.shift_date))
+        .select_from(models.Shift)
+        .join(
+            models.ShiftAssignment,
+            models.ShiftAssignment.shift_id == models.Shift.id,
+        )
+        .where(models.ShiftAssignment.user_id == user_id)
+    )
+
+    # Número de certificado único por usuario y año
+    year = datetime.now(timezone.utc).year
+    short_id = str(user_id).replace("-", "")[:6].upper()
+    cert_number = f"XAMA-{year}-{short_id}"
+
+    return {
+        "full_name": user.full_name,
+        "dni": None,  # se añadirá si se crea el campo
+        "site": user.site,
+        "total_hours": hours_data.total_hours,
+        "total_shifts": hours_data.total_shifts,
+        "shifts_attended": hours_data.shifts_attended,
+        "first_shift_date": first_shift,
+        "certificate_number": cert_number,
+    }

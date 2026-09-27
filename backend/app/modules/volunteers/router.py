@@ -2,12 +2,14 @@ import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.modules.auth.dependencies import get_current_user, require_role
 from app.modules.users.models import Role, User
 from app.modules.volunteers import schemas, service
+from app.modules.volunteers.exporters.certificate_pdf import build_certificate
 
 router = APIRouter(prefix="/api", tags=["volunteers"])
 
@@ -21,6 +23,7 @@ async def _role_of(db: AsyncSession, user: User) -> str | None:
     return r.name if r else None
 
 
+# ─── Shifts ───
 @router.get("/shifts", response_model=list[schemas.ShiftRead])
 async def list_shifts(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
@@ -34,11 +37,7 @@ async def list_shifts(
     return await service.list_shifts(db, site, target_date, role)
 
 
-@router.post(
-    "/shifts",
-    response_model=schemas.ShiftRead,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/shifts", response_model=schemas.ShiftRead, status_code=201)
 async def create_shift(
     payload: schemas.ShiftCreate,
     db: AsyncSession = Depends(get_db),
@@ -78,7 +77,7 @@ async def update_shift(
     return shift
 
 
-@router.delete("/shifts/{shift_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/shifts/{shift_id}", status_code=204)
 async def delete_shift(
     shift_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
@@ -93,7 +92,7 @@ async def delete_shift(
 @router.post(
     "/shifts/{shift_id}/assign",
     response_model=schemas.AssignmentRead,
-    status_code=status.HTTP_201_CREATED,
+    status_code=201,
 )
 async def assign(
     shift_id: uuid.UUID,
@@ -117,10 +116,7 @@ async def assign(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
-@router.delete(
-    "/shifts/{shift_id}/assign/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@router.delete("/shifts/{shift_id}/assign/{user_id}", status_code=204)
 async def unassign(
     shift_id: uuid.UUID,
     user_id: uuid.UUID,
@@ -158,6 +154,7 @@ async def mark_attendance(
     return assignment
 
 
+# ─── Hours ───
 @router.get("/volunteers/hours/me", response_model=schemas.VolunteerHours)
 async def my_hours(
     db: AsyncSession = Depends(get_db),
@@ -173,3 +170,47 @@ async def hours_summary(
     _user: User = Depends(require_role("junta")),
 ):
     return await service.hours_summary(db, limit)
+
+
+# ─── Certificate ───
+@router.get("/volunteers/me/certificate.pdf")
+async def my_certificate(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    try:
+        data = await service.certificate_data(db, user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    pdf = build_certificate(**data)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="certificado-{data["certificate_number"]}.pdf"'
+            )
+        },
+    )
+
+
+@router.get("/volunteers/{user_id}/certificate.pdf")
+async def certificate_for_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role(*COORD_ROLES)),
+):
+    try:
+        data = await service.certificate_data(db, user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    pdf = build_certificate(**data)
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="certificado-{data["certificate_number"]}.pdf"'
+            )
+        },
+    )

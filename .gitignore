@@ -8,3 +8,7 @@ node_modules/
 dist/
 *.log
 pgdata/
+
+# Backups (NUNCA subir al repo)
+backups/
+*.sql.gz

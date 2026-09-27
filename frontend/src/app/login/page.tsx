@@ -35,7 +35,11 @@ export default function LoginPage() {
         className="w-full max-w-sm rounded-xl bg-white p-8 shadow-lg"
       >
         <h1 className="mb-1 text-2xl font-bold">XAMA-ONG</h1>
-        <p className="mb-6 text-sm text-slate-500">Accede a la plataforma</p>
+<p className="mb-6 text-sm text-slate-500">Accede a la plataforma</p>
+
+<a href="/public" className="mb-6 block text-center text-xs text-slate-400 hover:text-slate-600">
+  ← Volver a la portada pública
+</a>
 
         {error && (
           <div className="mb-4 rounded-md bg-rose-50 p-3 text-sm text-rose-700">
