@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Upload, Plus, Users } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api, downloadFile, getToken } from "@/lib/api";
 import type { Family } from "@/lib/types";
 
@@ -40,10 +44,15 @@ export default function FamiliesPage() {
 
   const load = async () => {
     setLoading(true);
-    const q = siteFilter ? `?site=${siteFilter}` : "";
-    const data = await api<Family[]>(`/api/families${q}`);
-    setFamilies(data);
-    setLoading(false);
+    try {
+      const q = siteFilter ? `?site=${siteFilter}` : "";
+      const data = await api<Family[]>(`/api/families${q}`);
+      setFamilies(data);
+    } catch {
+      toast.error("Error al cargar las familias");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -52,19 +61,26 @@ export default function FamiliesPage() {
 
   const deleteFamily = async (id: string) => {
     await api(`/api/families/${id}`, { method: "DELETE" });
+    toast.success("Familia eliminada");
     load();
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <AppShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Familias
-        </h1>
-        <div className="flex flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Familias
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {families.length} familia{families.length === 1 ? "" : "s"}
+            {siteFilter && ` en ${siteFilter}`}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
           <select
             value={siteFilter}
             onChange={(e) => setSiteFilter(e.target.value)}
@@ -75,25 +91,27 @@ export default function FamiliesPage() {
             <option value="tarragona">Tarragona</option>
           </select>
           {canImport && (
-            <button
+            <Button
+              variant="outline"
+              icon={<Upload className="h-4 w-4" />}
               onClick={() => {
                 setShowImport(!showImport);
                 setShowForm(false);
               }}
-              className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 dark:hover:bg-emerald-900"
             >
               {showImport ? "Cancelar" : "Importar CSV"}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="primary"
+            icon={<Plus className="h-4 w-4" />}
             onClick={() => {
               setShowForm(!showForm);
               setShowImport(false);
             }}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
           >
-            {showForm ? "Cancelar" : "+ Nueva familia"}
-          </button>
+            {showForm ? "Cancelar" : "Nueva familia"}
+          </Button>
         </div>
       </div>
 
@@ -105,17 +123,32 @@ export default function FamiliesPage() {
         <NewFamilyForm
           onCreated={() => {
             setShowForm(false);
+            toast.success("Familia creada");
             load();
           }}
         />
       )}
 
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando familias…" />
+      ) : families.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-3 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Users className="h-8 w-8 text-slate-400" />
+            </div>
+          </div>
+          <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">
+            Sin familias todavía
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Pulsa "Nueva familia" o importa un CSV para empezar.
+          </p>
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Sede</th>
@@ -131,7 +164,7 @@ export default function FamiliesPage() {
               {families.map((f) => (
                 <tr
                   key={f.id}
-                  className="border-t border-slate-100 dark:border-slate-800"
+                  className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                 >
                   <td className="px-4 py-3 font-mono text-xs">
                     {f.reference_code}
@@ -168,16 +201,6 @@ export default function FamiliesPage() {
                   )}
                 </tr>
               ))}
-              {families.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={canImport ? 8 : 7}
-                    className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
-                  >
-                    Sin familias
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -246,6 +269,7 @@ function ImportCSVModal({
       const data: ImportPreview = await res.json();
       setPreview(data);
       setDone(data.imported);
+      toast.success(`${data.imported} familias importadas`);
       onImported();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Error");
@@ -260,13 +284,14 @@ function ImportCSVModal({
         "/api/families/template.csv",
         "xama-familias-plantilla.csv"
       );
+      toast.success("Plantilla descargada");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Error");
     }
   };
 
   return (
-    <div className="mb-6 space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 dark:border-emerald-900 dark:bg-emerald-950/30">
+    <div className="mb-6 animate-slide-up space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 dark:border-emerald-900 dark:bg-emerald-950/30">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -281,8 +306,7 @@ function ImportCSVModal({
             <code className="rounded bg-slate-200 px-1 text-xs dark:bg-slate-800">
               site
             </code>{" "}
-            (reus|tarragona). Opcionales: adults, minors, address, phone,
-            dietary_restrictions, notes.
+            (reus|tarragona).
           </p>
         </div>
         <button
@@ -302,14 +326,11 @@ function ImportCSVModal({
             setFile(f);
             if (f) callPreview(f);
           }}
-          className="block text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-700 dark:text-slate-300 dark:file:bg-emerald-600 dark:hover:file:bg-emerald-700"
+          className="block text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-700 dark:text-slate-300 dark:file:bg-xama-600 dark:hover:file:bg-xama-700"
         />
-        <button
-          onClick={downloadTemplate}
-          className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-        >
+        <Button variant="outline" size="sm" onClick={downloadTemplate}>
           Descargar plantilla
-        </button>
+        </Button>
       </div>
 
       {loading && (
@@ -391,17 +412,16 @@ function ImportCSVModal({
           </div>
 
           {done === null && preview.valid > 0 && (
-            <button
+            <Button
+              variant="success"
+              loading={importing}
               onClick={runImport}
-              disabled={importing}
-              className="w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="w-full"
             >
               {importing
                 ? "Importando…"
-                : `Importar ${preview.valid} familia${
-                    preview.valid === 1 ? "" : "s"
-                  }`}
-            </button>
+                : `Importar ${preview.valid} familia${preview.valid === 1 ? "" : "s"}`}
+            </Button>
           )}
 
           {done !== null && (
@@ -460,9 +480,7 @@ function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-        map[status] ?? ""
-      }`}
+      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${map[status] ?? ""}`}
     >
       {labels[status] ?? status}
     </span>
@@ -510,12 +528,12 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      className="mb-6 animate-slide-up space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <input
@@ -575,13 +593,14 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
 
       {err && <p className="text-sm text-rose-600">{err}</p>}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+        variant="primary"
+        loading={loading}
+        icon={<Plus className="h-4 w-4" />}
       >
         {loading ? "Creando…" : "Crear familia"}
-      </button>
+      </Button>
     </form>
   );
 }
