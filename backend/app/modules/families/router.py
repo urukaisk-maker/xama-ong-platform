@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -95,3 +95,55 @@ async def check_in(
     if delivery is None:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
     return delivery
+
+
+# ─── Import CSV ───
+from fastapi import File, UploadFile  # noqa: E402
+from app.modules.auth.dependencies import get_current_user, require_role  # noqa: E402
+from app.modules.users.models import User  # noqa: E402
+
+COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
+
+
+@router.post("/families/import/preview", response_model=schemas.ImportPreview)
+async def import_preview(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role(*COORD_ROLES)),
+):
+    if not file.filename or not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser .csv")
+    content = (await file.read()).decode("utf-8-sig")
+    return await service.import_csv_preview(db, content)
+
+
+@router.post("/families/import", response_model=schemas.ImportPreview)
+async def import_families(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_role(*COORD_ROLES)),
+):
+    if not file.filename or not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="El archivo debe ser .csv")
+    content = (await file.read()).decode("utf-8-sig")
+    return await service.import_csv(db, content)
+
+
+@router.get("/families/template.csv")
+async def families_template(
+    _user: User = Depends(require_role(*COORD_ROLES)),
+):
+    csv_text = (
+        "reference_code,site,adults,minors,address,phone,"
+        "dietary_restrictions,notes\n"
+        "FAM-001,reus,2,3,Carrer Major 12,600111222,Sin gluten,\n"
+        "FAM-002,tarragona,1,0,Avinguda Roma 45,600333444,,\n"
+        "FAM-003,reus,3,1,,600555666,Vegetariana,Familia monoparental\n"
+    )
+    return Response(
+        content=csv_text,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="xama-familias-plantilla.csv"'
+        },
+    )

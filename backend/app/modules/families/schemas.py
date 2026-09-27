@@ -75,3 +75,22 @@ class FamilySummary(BaseModel):
     reus_families: int
     tarragona_families: int
     total_people: int
+
+
+# ─── Import CSV ───
+class ImportRow(BaseModel):
+    line: int
+    reference_code: str
+    status: str  # valid | invalid | duplicate
+    message: str | None = None
+    data: dict | None = None
+
+
+class ImportPreview(BaseModel):
+    total_rows: int
+    valid: int
+    invalid: int
+    duplicates: int
+    imported: int
+    errors: list[str]
+    rows: list[ImportRow]
