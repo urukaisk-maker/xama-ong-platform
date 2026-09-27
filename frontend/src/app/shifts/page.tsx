@@ -1,12 +1,34 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Calendar, Plus, UserPlus, Users } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 import type { Shift } from "@/lib/types";
 
 const COORD_ROLES = ["junta", "coordinador_reus", "coordinador_tarragona"];
+
+const ROLE_COLORS: Record<string, string> = {
+  vehiculo:
+    "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  clasificacion:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  cestas:
+    "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  puerta:
+    "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  vehiculo: "Vehículo",
+  clasificacion: "Clasificación",
+  cestas: "Cestas",
+  puerta: "Puerta",
+};
 
 export default function ShiftsPage() {
   const today = new Date().toISOString().slice(0, 10);
@@ -15,6 +37,7 @@ export default function ShiftsPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const { user } = useUser();
   const isCoord =
@@ -22,11 +45,16 @@ export default function ShiftsPage() {
 
   const load = async () => {
     setLoading(true);
-    const s = await api<Shift[]>(
-      `/api/shifts?site=${site}&target_date=${date}`
-    );
-    setShifts(s);
-    setLoading(false);
+    try {
+      const s = await api<Shift[]>(
+        `/api/shifts?site=${site}&target_date=${date}`
+      );
+      setShifts(s);
+    } catch {
+      toast.error("Error al cargar los turnos");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -34,40 +62,57 @@ export default function ShiftsPage() {
   }, [site, date]);
 
   const join = async (id: string) => {
+    setJoiningId(id);
     try {
       await api(`/api/shifts/${id}/assign`, {
         method: "POST",
         body: JSON.stringify({}),
       });
+      toast.success("Te has apuntado al turno");
       load();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error");
+      toast.error(e instanceof Error ? e.message : "Error");
+    } finally {
+      setJoiningId(null);
     }
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <AppShell>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Cuadrantes
-        </h1>
-        <div className="flex gap-2">
-          <Link
-            href="/shifts/calendar"
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            Ver calendario
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Cuadrantes
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {shifts.length} turno{shifts.length === 1 ? "" : "s"} en {site} ·{" "}
+            {new Date(date).toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+            })}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/shifts/calendar">
+            <Button
+              variant="outline"
+              icon={<Calendar className="h-4 w-4" />}
+            >
+              Ver calendario
+            </Button>
           </Link>
           {isCoord && (
-            <button
+            <Button
+              variant="primary"
+              icon={<Plus className="h-4 w-4" />}
               onClick={() => setShowForm(!showForm)}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
             >
-              {showForm ? "Cancelar" : "+ Nuevo turno"}
-            </button>
+              {showForm ? "Cancelar" : "Nuevo turno"}
+            </Button>
           )}
         </div>
       </div>
@@ -78,6 +123,7 @@ export default function ShiftsPage() {
           defaultDate={date}
           onCreated={() => {
             setShowForm(false);
+            toast.success("Turno creado");
             load();
           }}
         />
@@ -101,53 +147,86 @@ export default function ShiftsPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando turnos…" />
+      ) : shifts.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-3 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Calendar className="h-8 w-8 text-slate-400" />
+            </div>
+          </div>
+          <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">
+            Sin turnos para este día
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Cambia la fecha o crea un turno nuevo.
+          </p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {shifts.map((s) => (
-            <div
-              key={s.id}
-              className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold capitalize text-slate-900 dark:text-white">
-                    {s.role}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
-                  </p>
+          {shifts.map((s) => {
+            const roleColor = ROLE_COLORS[s.role] ?? "bg-slate-100 text-slate-700";
+            const free = s.capacity - s.assignments.length;
+            return (
+              <div
+                key={s.id}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${roleColor}`}
+                      >
+                        {ROLE_LABELS[s.role] ?? s.role}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                      </span>
+                    </div>
+                    {s.notes && (
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {s.notes}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                    <Users className="h-3.5 w-3.5" />
+                    <span className="font-medium">
+                      {s.assignments.length}/{s.capacity}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {s.assignments.length}/{s.capacity}
-                </span>
-              </div>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {s.assignments.map((a) => (
-                  <span
-                    key={a.id}
-                    className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                  >
-                    {a.user_id.slice(0, 8)}
-                  </span>
-                ))}
-                {s.assignments.length < s.capacity && (
-                  <button
-                    onClick={() => join(s.id)}
-                    className="rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800"
-                  >
-                    + Apuntarme
-                  </button>
-                )}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {s.assignments.map((a) => (
+                    <span
+                      key={a.id}
+                      className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    >
+                      {a.user_id.slice(0, 8)}
+                    </span>
+                  ))}
+                  {free > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      loading={joiningId === s.id}
+                      icon={<UserPlus className="h-3.5 w-3.5" />}
+                      onClick={() => join(s.id)}
+                    >
+                      {joiningId === s.id ? "Apuntando…" : "Apuntarme"}
+                    </Button>
+                  )}
+                  {free === 0 && (
+                    <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                      Completo
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-          {shifts.length === 0 && (
-            <p className="text-slate-400 dark:text-slate-500">
-              Sin turnos para este día
-            </p>
-          )}
+            );
+          })}
         </div>
       )}
     </AppShell>
@@ -201,12 +280,12 @@ function NewShiftForm({
   };
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <form
       onSubmit={submit}
-      className="mb-6 space-y-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+      className="mb-6 animate-slide-up space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <input
@@ -269,13 +348,14 @@ function NewShiftForm({
 
       {err && <p className="text-sm text-rose-600">{err}</p>}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+        variant="primary"
+        loading={loading}
+        icon={<Plus className="h-4 w-4" />}
       >
         {loading ? "Creando…" : "Crear turno"}
-      </button>
+      </Button>
     </form>
   );
 }
