@@ -59,7 +59,6 @@ export default function InventoryPage() {
     load();
   };
 
-  // Ordenar por caducidad ascendente (FeFo)
   const sortedBatches = [...batches].sort(
     (a, b) =>
       new Date(a.expiry_date).getTime() - new Date(b.expiry_date).getTime()
@@ -97,9 +96,11 @@ export default function InventoryPage() {
         />
       )}
 
-            {loading ? (
+      {loading ? (
         <SkeletonTable rows={8} cols={canDelete ? 6 : 5} />
       ) : batches.length === 0 ? (
+        <EmptyState />
+      ) : (
         <Surface hover={false} className="overflow-hidden">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200/60 bg-slate-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800/60 dark:bg-slate-800/40 dark:text-slate-400">
@@ -159,7 +160,6 @@ export default function InventoryPage() {
                             {expiry.label}
                           </Badge>
                         </div>
-                        {/* Barra de progreso FeFo */}
                         <div
                           className={`h-1 w-full overflow-hidden rounded-full ${getProgressTrack(
                             expiry.level
