@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from app.modules.admin.router import router as admin_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.modules.admin.maintenance import router as maintenance_router
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
         await ensure_default_admin(db)
     yield
     await engine.dispose()
-
+app.include_router(maintenance_router)
 
 app = FastAPI(title="XAMA-ONG API", version="0.1.0", lifespan=lifespan)
 
