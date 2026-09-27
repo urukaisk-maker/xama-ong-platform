@@ -1,22 +1,22 @@
 export const SITE_CONFIG = {
   // ─── ONG ───
   ong: {
-    name: "XAMA-ONG",
-    fullName: "XAMA-ONG · Asociación sin ánimo de lucro",
-    tagline: "Recuperamos alimentos, alimentamos esperanza",
-    bizumPhone: "600 000 000",
-    iban: "ES00 0000 0000 0000 0000 0000",
-    ibanHolder: "XAMA ONG",
-    email: "hola@xamaong.cat",
-    phone: "977 000 000",
-    address: "Reus · Tarragona (España)",
-    city: "Reus",
-    bankName: "CaixaBank",
-    // Redes sociales (déjalas vacías "" si no las usas)
-    instagram: "",
-    facebook: "",
-    twitter: "",
-  },
+  bizumPhone: "600 000 000",              // ← teléfono Bizum real
+  iban: "ES00 0000 0000 0000 0000 0000",  // ← IBAN real
+  ibanHolder: "XAMA ONG",                  // ← titular de la cuenta
+  email: "hola@xamaong.cat",               // ← email real de contacto
+  phone: "977 000 000",                    // ← teléfono fijo
+  address: "Reus · Tarragona (España)",    // ← dirección de la sede
+  // ...
+},
+
+developer: {
+  name: "Manuel Casimiro Carrasco",
+  role: "Desarrollador Web",
+  location: "Reus, Tarragona (España)",
+  email: "manuelcasimirocarrasco@example.com",  // ← tu email real
+  // ...
+}
 
   // ─── Desarrollador ───
   developer: {
