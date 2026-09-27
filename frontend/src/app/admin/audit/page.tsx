@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ClipboardList, Filter, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
+import Button from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/Loading";
 import { api } from "@/lib/api";
 
 type Entry = {
@@ -29,8 +33,7 @@ type Summary = {
 };
 
 const ACTION_COLORS: Record<string, string> = {
-  delete:
-    "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  delete: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
   soft_delete:
     "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
   deactivate:
@@ -39,6 +42,8 @@ const ACTION_COLORS: Record<string, string> = {
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
   maintenance_cleanup:
     "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  donation_certificate:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -47,13 +52,13 @@ const ACTION_LABELS: Record<string, string> = {
   deactivate: "desactivado",
   restore: "restaurado",
   maintenance_cleanup: "limpieza",
+  donation_certificate: "certificado donación",
 };
 
 export default function AuditPage() {
   const [data, setData] = useState<LogResponse | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
   const [actionFilter, setActionFilter] = useState("");
   const [resourceFilter, setResourceFilter] = useState("");
   const [daysFilter, setDaysFilter] = useState<number>(30);
@@ -62,7 +67,6 @@ export default function AuditPage() {
 
   const load = async () => {
     setLoading(true);
-    setErr(null);
     try {
       const params = new URLSearchParams({ limit: "100" });
       if (actionFilter) params.set("action", actionFilter);
@@ -75,8 +79,8 @@ export default function AuditPage() {
       ]);
       setData(d);
       setSummary(s);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Error");
+    } catch {
+      toast.error("Error al cargar el registro de auditoría");
     } finally {
       setLoading(false);
     }
@@ -97,22 +101,29 @@ export default function AuditPage() {
   }
 
   const inputCls =
-    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+    "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
     <AppShell>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Auditoría
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Registro de acciones: quién borró, restauró o modificó qué
-        </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Auditoría
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Registro de acciones: quién borró, restauró o modificó qué
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          loading={loading}
+          icon={<RefreshCw className="h-4 w-4" />}
+          onClick={load}
+        >
+          Actualizar
+        </Button>
       </div>
 
-      {err && <p className="mb-4 text-rose-600">{err}</p>}
-
-      {/* Resumen */}
       {summary && summary.by_action.length > 0 && (
         <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
           <SummaryCard title="Por tipo de acción">
@@ -141,7 +152,7 @@ export default function AuditPage() {
             {summary.by_resource.map((r) => (
               <SummaryLine
                 key={r.resource}
-                label={r.resource}
+                label={r.resource.replace(/_/g, " ")}
                 count={r.count}
               />
             ))}
@@ -149,8 +160,13 @@ export default function AuditPage() {
         </div>
       )}
 
-      {/* Filtros */}
-      <div className="mb-4 flex flex-wrap gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 text-slate-400">
+          <Filter className="h-4 w-4" />
+          <span className="text-xs font-medium uppercase tracking-wide">
+            Filtrar
+          </span>
+        </div>
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
@@ -162,6 +178,7 @@ export default function AuditPage() {
           <option value="deactivate">Desactivados</option>
           <option value="restore">Restaurados</option>
           <option value="maintenance_cleanup">Limpiezas</option>
+          <option value="donation_certificate">Certificados donación</option>
         </select>
 
         <select
@@ -177,6 +194,7 @@ export default function AuditPage() {
           <option value="nevera_ration">Raciones</option>
           <option value="derivation">Derivaciones</option>
           <option value="user">Usuarios</option>
+          <option value="donation">Donaciones</option>
           <option value="system">Sistema</option>
         </select>
 
@@ -192,14 +210,20 @@ export default function AuditPage() {
         </select>
       </div>
 
-      {/* Tabla */}
       {loading ? (
-        <p className="text-slate-500 dark:text-slate-400">Cargando…</p>
+        <LoadingState label="Cargando auditoría…" />
       ) : !data || data.entries.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-700 dark:bg-slate-900">
-          <div className="mb-3 text-4xl">📋</div>
-          <p className="text-slate-500 dark:text-slate-400">
-            Sin registros de auditoría en este rango
+        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-3 flex justify-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <ClipboardList className="h-8 w-8 text-slate-400" />
+            </div>
+          </div>
+          <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">
+            Sin registros
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No hay acciones registradas en este rango.
           </p>
         </div>
       ) : (
@@ -207,9 +231,9 @@ export default function AuditPage() {
           <div className="mb-2 text-xs text-slate-500 dark:text-slate-400">
             Mostrando {data.entries.length} de {data.total} registros
           </div>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 <tr>
                   <th className="px-4 py-3">Fecha</th>
                   <th className="px-4 py-3">Usuario</th>
@@ -222,7 +246,7 @@ export default function AuditPage() {
                 {data.entries.map((e) => (
                   <tr
                     key={e.id}
-                    className="border-t border-slate-100 dark:border-slate-800"
+                    className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                   >
                     <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500 dark:text-slate-400">
                       {e.created_at
@@ -237,7 +261,7 @@ export default function AuditPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                           ACTION_COLORS[e.action] ??
                           "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                         }`}
@@ -246,7 +270,7 @@ export default function AuditPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs capitalize text-slate-600 dark:text-slate-400">
-                      {e.resource_type}
+                      {e.resource_type.replace(/_/g, " ")}
                     </td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
                       {e.description ?? "—"}
@@ -270,8 +294,8 @@ function SummaryCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-      <h3 className="mb-3 text-sm font-semibold uppercase text-slate-500 dark:text-slate-400">
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {title}
       </h3>
       <div className="space-y-1.5">{children}</div>
