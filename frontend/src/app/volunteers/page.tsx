@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Award, Clock, Download, Users, TrendingUp } from "lucide-react";
+import { Award, Download, Users, Clock, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import Button from "@/components/ui/Button";
-import { LoadingState } from "@/components/ui/Loading";
+import { Avatar } from "@/components/ui/Avatar";
+import Surface from "@/components/ui/Surface";
+import { LoadingState, SkeletonKPI, SkeletonTable } from "@/components/ui/Loading";
 import { api, downloadFile } from "@/lib/api";
 import type { HoursSummary } from "@/lib/types";
 
@@ -66,7 +68,7 @@ export default function VolunteersPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Voluntariado
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -85,7 +87,10 @@ export default function VolunteersPage() {
       </div>
 
       {loading ? (
-        <LoadingState label="Cargando voluntariado…" />
+        <div className="space-y-6">
+          <SkeletonKPI count={3} cols="md:grid-cols-3" />
+          <SkeletonTable rows={8} cols={6} />
+        </div>
       ) : err ? (
         <p className="text-rose-600">{err}</p>
       ) : !data ? null : (
@@ -111,9 +116,9 @@ export default function VolunteersPage() {
             />
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <Surface hover={false} className="overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <thead className="border-b border-slate-200/60 bg-slate-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800/60 dark:bg-slate-800/40 dark:text-slate-400">
                 <tr>
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">Voluntario</th>
@@ -129,27 +134,34 @@ export default function VolunteersPage() {
                   return (
                     <tr
                       key={v.user_id}
-                      className={`border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50 ${
-                        isTop3 ? "bg-emerald-50/40 dark:bg-emerald-950/20" : ""
+                      className={`border-t border-slate-100/60 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/40 ${
+                        isTop3 ? "bg-emerald-50/30 dark:bg-emerald-950/10" : ""
                       }`}
                     >
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                          className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                             i === 0
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                              ? "bg-amber-400/20 text-amber-700 dark:text-amber-300"
                               : i === 1
-                              ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                              ? "bg-slate-300/30 text-slate-700 dark:text-slate-200"
                               : i === 2
-                              ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
+                              ? "bg-orange-400/20 text-orange-700 dark:text-orange-300"
                               : "text-slate-400 dark:text-slate-500"
                           }`}
                         >
-                          {i + 1}
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-medium">{v.full_name}</td>
-                      <td className="px-4 py-3 font-mono">{v.total_hours}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar name={v.full_name} size="md" />
+                          <span className="font-medium">{v.full_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-mono">
+                        {v.total_hours} h
+                      </td>
                       <td className="px-4 py-3">{v.total_shifts}</td>
                       <td className="px-4 py-3">{v.shifts_attended}</td>
                       <td className="px-4 py-3 text-right">
@@ -160,9 +172,7 @@ export default function VolunteersPage() {
                             loading={downloading === v.user_id}
                             disabled={downloading !== null}
                             icon={<Download className="h-3.5 w-3.5" />}
-                            onClick={() =>
-                              downloadFor(v.user_id, v.full_name)
-                            }
+                            onClick={() => downloadFor(v.user_id, v.full_name)}
                           >
                             Certificado
                           </Button>
@@ -183,7 +193,7 @@ export default function VolunteersPage() {
                 )}
               </tbody>
             </table>
-          </div>
+          </Surface>
         </>
       )}
     </AppShell>
@@ -206,12 +216,16 @@ function StatCard({
     emerald: "text-emerald-600 dark:text-emerald-400",
   };
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+    <Surface className="p-5">
       <div className="mb-2 flex items-center gap-2 text-slate-400">
         {icon}
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
       </div>
-      <p className={`text-3xl font-bold ${colors[color]}`}>{value}</p>
-    </div>
+      <p
+        className={`text-3xl font-semibold tracking-tight ${colors[color]}`}
+      >
+        {value}
+      </p>
+    </Surface>
   );
 }
