@@ -5,6 +5,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Enum as SAEnum,
     Integer,
     String,
     Text,
@@ -14,6 +15,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
+from app.models.enums import DerivationStatus, ReferralSource
 
 
 class NeveraRation(Base):
@@ -44,10 +46,21 @@ class Derivation(Base):
     )
     reference_code: Mapped[str] = mapped_column(String(50), unique=True)
     person_name: Mapped[str | None] = mapped_column(String(255))
-    origin: Mapped[str] = mapped_column(String(100))
+    origin: Mapped[ReferralSource] = mapped_column(
+        SAEnum(
+            ReferralSource, native_enum=False, length=100, validate_strings=True
+        ),
+        nullable=False,
+    )
     reason: Mapped[str | None] = mapped_column(Text)
     rations: Mapped[int] = mapped_column(Integer, default=1)
-    status: Mapped[str] = mapped_column(String(20), default="pendiente")
+    status: Mapped[DerivationStatus] = mapped_column(
+        SAEnum(
+            DerivationStatus, native_enum=False, length=20, validate_strings=True
+        ),
+        default=DerivationStatus.PENDIENTE,
+        nullable=False,
+    )
     served_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
@@ -56,4 +69,12 @@ class Derivation(Base):
 
     __table_args__ = (
         CheckConstraint("rations >= 1", name="ck_derivations_rations_pos"),
+        CheckConstraint(
+            "origin IN ('servicios_sociales', 'policia_local', 'cruz_roja', 'otro')",
+            name="ck_derivations_origin",
+        ),
+        CheckConstraint(
+            "status IN ('pendiente', 'servida', 'cancelada')",
+            name="ck_derivations_status",
+        ),
     )

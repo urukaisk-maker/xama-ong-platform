@@ -20,6 +20,12 @@ class DeliveryStatus(str, Enum):
     CANCELADA = "cancelada"
 
 
+class DerivationStatus(str, Enum):
+    PENDIENTE = "pendiente"
+    SERVIDA = "servida"
+    CANCELADA = "cancelada"
+
+
 class BatchOrigin(str, Enum):
     BANCO_ALIMENTOS = "banco_alimentos"
     DONACION = "donacion"
