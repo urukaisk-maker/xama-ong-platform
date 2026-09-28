@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import Site, VolunteerShiftRole
 from app.db.session import get_db
 from app.modules.auth.dependencies import get_current_user, require_role
 from app.modules.users.models import Role, User
@@ -26,13 +27,11 @@ async def _role_of(db: AsyncSession, user: User) -> str | None:
 # ─── Shifts ───
 @router.get("/shifts", response_model=list[schemas.ShiftRead])
 async def list_shifts(
-    site: str | None = Query(None, pattern="^(reus|tarragona)$"),
+    site: Site | None = Query(None),
     target_date: date | None = Query(None),
     from_date: date | None = Query(None),
     to_date: date | None = Query(None),
-    role: str | None = Query(
-        None, pattern="^(vehiculo|clasificacion|cestas|puerta)$"
-    ),
+    role: VolunteerShiftRole | None = Query(None),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(get_current_user),
 ):
