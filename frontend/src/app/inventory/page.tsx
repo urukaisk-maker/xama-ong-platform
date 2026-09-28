@@ -1,4 +1,3 @@
-cat > ~/proyectos/xama-ong-platform/frontend/src/app/inventory/page.tsx <<'EOF'
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, Package, Pencil } from "lucide-react";
@@ -565,4 +564,3 @@ function NewBatchForm({
     </Surface>
   );
 }
-EOF
