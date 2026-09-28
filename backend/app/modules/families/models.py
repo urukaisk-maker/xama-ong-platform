@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Enum as SAEnum,
     ForeignKey,
     Integer,
     String,
@@ -16,6 +17,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.enums import DeliveryStatus, Site
+
+
+SITE_CHECK = "site IN ('reus', 'tarragona')"
+STATUS_CHECK = "status IN ('pendiente', 'entregada', 'cancelada')"
 
 
 class Family(Base):
@@ -31,7 +37,10 @@ class Family(Base):
     minors: Mapped[int] = mapped_column(Integer, default=0)
     dietary_restrictions: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
-    site: Mapped[str] = mapped_column(String(50))
+    site: Mapped[Site] = mapped_column(
+        SAEnum(Site, native_enum=False, length=50, validate_strings=True),
+        nullable=False,
+    )
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -44,6 +53,7 @@ class Family(Base):
     __table_args__ = (
         CheckConstraint("adults >= 0", name="ck_families_adults_positive"),
         CheckConstraint("minors >= 0", name="ck_families_minors_positive"),
+        CheckConstraint(SITE_CHECK, name="ck_families_site"),
     )
 
 
@@ -57,11 +67,18 @@ class Delivery(Base):
         UUID(as_uuid=True), ForeignKey("families.id", ondelete="CASCADE")
     )
     delivery_date: Mapped[date] = mapped_column(Date, nullable=False)
-    site: Mapped[str] = mapped_column(String(50), nullable=False)
+    site: Mapped[Site] = mapped_column(
+        SAEnum(Site, native_enum=False, length=50, validate_strings=True),
+        nullable=False,
+    )
     volunteer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id")
     )
-    status: Mapped[str] = mapped_column(String(20), default="pendiente")
+    status: Mapped[DeliveryStatus] = mapped_column(
+        SAEnum(DeliveryStatus, native_enum=False, length=20, validate_strings=True),
+        default=DeliveryStatus.PENDIENTE,
+        nullable=False,
+    )
     notes: Mapped[str | None] = mapped_column(Text)
     checked_in_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
@@ -69,3 +86,8 @@ class Delivery(Base):
     )
 
     family: Mapped[Family] = relationship(back_populates="deliveries")
+
+    __table_args__ = (
+        CheckConstraint(SITE_CHECK, name="ck_deliveries_site"),
+        CheckConstraint(STATUS_CHECK, name="ck_deliveries_status"),
+    )
