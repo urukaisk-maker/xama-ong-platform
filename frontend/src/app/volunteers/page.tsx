@@ -5,9 +5,14 @@ import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import Button from "@/components/ui/Button";
+import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import { Avatar } from "@/components/ui/Avatar";
 import Surface from "@/components/ui/Surface";
-import { LoadingState, SkeletonKPI, SkeletonTable } from "@/components/ui/Loading";
+import {
+  LoadingState,
+  SkeletonKPI,
+  SkeletonTable,
+} from "@/components/ui/Loading";
 import { api, downloadFile } from "@/lib/api";
 import type { HoursSummary } from "@/lib/types";
 
@@ -23,15 +28,23 @@ export default function VolunteersPage() {
     user?.role_name === "coordinador_reus" ||
     user?.role_name === "coordinador_tarragona";
 
+  const load = async () => {
+    setLoading(true);
+    try {
+      const d = await api<HoursSummary>("/api/volunteers/hours/summary");
+      setData(d);
+      setErr(null);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error";
+      setErr(msg);
+      toast.error("Error al cargar el voluntariado");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    api<HoursSummary>("/api/volunteers/hours/summary")
-      .then(setData)
-      .catch((e) => {
-        const msg = e instanceof Error ? e.message : "Error";
-        setErr(msg);
-        toast.error("Error al cargar el voluntariado");
-      })
-      .finally(() => setLoading(false));
+    load();
   }, []);
 
   const downloadMine = async () => {
@@ -64,6 +77,12 @@ export default function VolunteersPage() {
     }
   };
 
+  const deactivateVolunteer = async (userId: string, name: string) => {
+    await api(`/api/auth/users/${userId}`, { method: "DELETE" });
+    toast.success(`${name} desactivado`);
+    load();
+  };
+
   return (
     <AppShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -89,7 +108,7 @@ export default function VolunteersPage() {
       {loading ? (
         <div className="space-y-6">
           <SkeletonKPI count={3} cols="md:grid-cols-3" />
-          <SkeletonTable rows={8} cols={6} />
+          <SkeletonTable rows={8} cols={7} />
         </div>
       ) : err ? (
         <p className="text-rose-600">{err}</p>
@@ -125,7 +144,7 @@ export default function VolunteersPage() {
                   <th className="px-4 py-3">Horas</th>
                   <th className="px-4 py-3">Turnos</th>
                   <th className="px-4 py-3">Asistidos</th>
-                  <th className="px-4 py-3"></th>
+                  {canDownloadForOthers && <th className="px-4 py-3"></th>}
                 </tr>
               </thead>
               <tbody className="dark:text-slate-200">
@@ -150,7 +169,13 @@ export default function VolunteersPage() {
                               : "text-slate-400 dark:text-slate-500"
                           }`}
                         >
-                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}
+                          {i === 0
+                            ? "🥇"
+                            : i === 1
+                            ? "🥈"
+                            : i === 2
+                            ? "🥉"
+                            : i + 1}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -159,32 +184,43 @@ export default function VolunteersPage() {
                           <span className="font-medium">{v.full_name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono">
-                        {v.total_hours} h
-                      </td>
+                      <td className="px-4 py-3 font-mono">{v.total_hours} h</td>
                       <td className="px-4 py-3">{v.total_shifts}</td>
                       <td className="px-4 py-3">{v.shifts_attended}</td>
-                      <td className="px-4 py-3 text-right">
-                        {canDownloadForOthers && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            loading={downloading === v.user_id}
-                            disabled={downloading !== null}
-                            icon={<Download className="h-3.5 w-3.5" />}
-                            onClick={() => downloadFor(v.user_id, v.full_name)}
-                          >
-                            Certificado
-                          </Button>
-                        )}
-                      </td>
+                      {canDownloadForOthers && (
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              loading={downloading === v.user_id}
+                              disabled={downloading !== null}
+                              icon={<Download className="h-3.5 w-3.5" />}
+                              onClick={() =>
+                                downloadFor(v.user_id, v.full_name)
+                              }
+                            >
+                              Certificado
+                            </Button>
+                            <ConfirmDelete
+                              title="¿Desactivar este voluntario?"
+                              message={`${v.full_name} dejará de poder acceder a la plataforma. Podrá reactivarse desde la papelera.`}
+                              onConfirm={() =>
+                                deactivateVolunteer(v.user_id, v.full_name)
+                              }
+                              trigger={TrashIcon}
+                              dangerLabel="Desactivar"
+                            />
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
                 {data.ranking.length === 0 && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={canDownloadForOthers ? 6 : 5}
                       className="px-4 py-6 text-center text-slate-400 dark:text-slate-500"
                     >
                       Sin datos todavía
@@ -221,9 +257,7 @@ function StatCard({
         {icon}
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
       </div>
-      <p
-        className={`text-3xl font-semibold tracking-tight ${colors[color]}`}
-      >
+      <p className={`text-3xl font-semibold tracking-tight ${colors[color]}`}>
         {value}
       </p>
     </Surface>
