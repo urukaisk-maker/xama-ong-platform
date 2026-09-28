@@ -1,4 +1,3 @@
-cat > ~/proyectos/xama-ong-platform/frontend/src/app/public/page.tsx <<'EOF'
 import Link from "next/link";
 import {
   ArrowRight,
@@ -7,7 +6,6 @@ import {
   Sparkles,
   Heart,
 } from "lucide-react";
-import DeveloperModal from "@/components/DeveloperModal";
 import IconByName from "@/components/IconByName";
 import PublicStats from "@/components/PublicStats";
 import { SectionDonar, Footer } from "./PublicPageClient";
@@ -20,7 +18,6 @@ export const revalidate = 60;
 export default function PublicPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* ─── Nav ─── */}
       <nav className="sticky top-0 z-10 border-b border-emerald-100 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
@@ -48,7 +45,6 @@ export default function PublicPage() {
         </div>
       </nav>
 
-      {/* ─── Hero ─── */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-12 text-center md:pt-24">
         <div className="mb-4 inline-block rounded-full bg-emerald-100 px-4 py-1 text-sm font-medium text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
           📍 {ong.address}
@@ -81,12 +77,10 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── Contadores ─── */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <PublicStats />
       </section>
 
-      {/* ─── Cómo lo hacemos ─── */}
       <section className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -94,8 +88,7 @@ export default function PublicPage() {
               Cómo lo hacemos
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-300">
-              Cuatro pilares simples que convierten el desperdicio en
-              dignidad.
+              Cuatro pilares simples que convierten el desperdicio en dignidad.
             </p>
           </div>
 
@@ -120,10 +113,8 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── DONAR (parte cliente) ─── */}
       <SectionDonar />
 
-      {/* ─── VOLUNTARIADO ─── */}
       <section
         id="voluntariado"
         className="border-t border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50"
@@ -135,8 +126,7 @@ export default function PublicPage() {
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-slate-600 dark:text-slate-300">
               ¿Tienes 4 horas a la semana? Necesitamos manos para recoger,
-              clasificar y repartir. Reus y Tarragona, turnos de mañana y
-              tarde.
+              clasificar y repartir. Reus y Tarragona, turnos de mañana y tarde.
             </p>
           </div>
 
@@ -165,7 +155,6 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── TESTIMONIOS ─── */}
       <section className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
@@ -211,7 +200,6 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── EMPRESAS ─── */}
       <section className="border-t border-slate-100 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
@@ -224,9 +212,9 @@ export default function PublicPage() {
                 ¿Eres empresa?
               </h2>
               <p className="mb-6 text-slate-600 dark:text-slate-300">
-                Si tu negocio genera excedentes alimentarios, podemos
-                recogerlos cada semana y certificar el impacto ambiental y
-                social. Sin coste para ti, con beneficios reales.
+                Si tu negocio genera excedentes alimentarios, podemos recogerlos
+                cada semana y certificar el impacto ambiental y social. Sin
+                coste para ti, con beneficios reales.
               </p>
 
               <ul className="mb-8 space-y-3">
@@ -284,15 +272,14 @@ export default function PublicPage() {
         </div>
       </section>
 
-      {/* ─── CTA FINAL ─── */}
       <section className="border-t border-emerald-100 bg-gradient-to-br from-emerald-600 to-emerald-800 py-20 text-white dark:border-emerald-900">
         <div className="mx-auto max-w-3xl px-6 text-center">
           <h2 className="mb-4 text-3xl font-bold tracking-tight md:text-4xl">
             Únete a XAMA-ONG
           </h2>
           <p className="mb-8 text-lg text-emerald-50">
-            Dona, hazte voluntario o trae el excedente de tu empresa. Cada
-            gesto se convierte en comida sobre la mesa de una familia.
+            Dona, hazte voluntario o trae el excedente de tu empresa. Cada gesto
+            se convierte en comida sobre la mesa de una familia.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <a
@@ -318,4 +305,3 @@ export default function PublicPage() {
     </main>
   );
 }
-EOF
