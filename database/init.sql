@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS batches (
     quantity NUMERIC(10,2) NOT NULL CHECK (quantity >= 0),
     expiry_date DATE NOT NULL,
     status VARCHAR(20) DEFAULT 'disponible',
+    notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

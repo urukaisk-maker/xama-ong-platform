@@ -4,6 +4,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.enums import Site
 from app.db.session import get_db
 from app.modules.audit.service import log_action
 from app.modules.auth.dependencies import get_current_user, require_role
@@ -18,7 +19,7 @@ COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
 # ─── Families ───
 @router.get("/families", response_model=list[schemas.FamilyRead])
 async def list_families(
-    site: str | None = Query(None, pattern="^(reus|tarragona)$"),
+    site: Site | None = Query(None),
     active: bool | None = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -90,7 +91,7 @@ async def family_summary(db: AsyncSession = Depends(get_db)):
 # ─── Deliveries ───
 @router.get("/deliveries", response_model=list[schemas.DeliveryRead])
 async def list_deliveries(
-    site: str | None = Query(None, pattern="^(reus|tarragona)$"),
+    site: Site | None = Query(None),
     target_date: date | None = Query(None),
     status_filter: str | None = Query(None, alias="status"),
     db: AsyncSession = Depends(get_db),

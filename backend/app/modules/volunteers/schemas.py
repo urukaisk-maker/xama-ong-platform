@@ -3,11 +3,13 @@ from datetime import date, datetime, time
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.enums import Site, VolunteerShiftRole
+
 
 class ShiftBase(BaseModel):
     shift_date: date
-    site: str = Field(..., pattern="^(reus|tarragona)$")
-    role: str = Field(..., pattern="^(vehiculo|clasificacion|cestas|puerta)$")
+    site: Site
+    role: VolunteerShiftRole
     start_time: time
     end_time: time
     capacity: int = Field(1, ge=1, le=50)
@@ -20,10 +22,8 @@ class ShiftCreate(ShiftBase):
 
 class ShiftUpdate(BaseModel):
     shift_date: date | None = None
-    site: str | None = Field(None, pattern="^(reus|tarragona)$")
-    role: str | None = Field(
-        None, pattern="^(vehiculo|clasificacion|cestas|puerta)$"
-    )
+    site: Site | None = None
+    role: VolunteerShiftRole | None = None
     start_time: time | None = None
     end_time: time | None = None
     capacity: int | None = Field(None, ge=1, le=50)

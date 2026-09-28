@@ -3,6 +3,8 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.models.enums import DeliveryStatus, Site
+
 
 # ─── Family ───
 class FamilyBase(BaseModel):
@@ -13,7 +15,7 @@ class FamilyBase(BaseModel):
     minors: int = Field(0, ge=0)
     dietary_restrictions: str | None = None
     notes: str | None = None
-    site: str = Field(..., pattern="^(reus|tarragona)$")
+    site: Site
     active: bool = True
 
 
@@ -28,7 +30,7 @@ class FamilyUpdate(BaseModel):
     minors: int | None = Field(None, ge=0)
     dietary_restrictions: str | None = None
     notes: str | None = None
-    site: str | None = Field(None, pattern="^(reus|tarragona)$")
+    site: Site | None = None
     active: bool | None = None
 
 
@@ -42,7 +44,7 @@ class FamilyRead(FamilyBase):
 class DeliveryBase(BaseModel):
     family_id: uuid.UUID
     delivery_date: date
-    site: str = Field(..., pattern="^(reus|tarragona)$")
+    site: Site
     volunteer_id: uuid.UUID | None = None
     notes: str | None = None
 
@@ -53,9 +55,9 @@ class DeliveryCreate(DeliveryBase):
 
 class DeliveryUpdate(BaseModel):
     delivery_date: date | None = None
-    site: str | None = Field(None, pattern="^(reus|tarragona)$")
+    site: Site | None = None
     volunteer_id: uuid.UUID | None = None
-    status: str | None = None
+    status: DeliveryStatus | None = None
     notes: str | None = None
 
 
@@ -64,9 +66,9 @@ class DeliveryRead(BaseModel):
     id: uuid.UUID
     family_id: uuid.UUID
     delivery_date: date
-    site: str
+    site: Site
     volunteer_id: uuid.UUID | None
-    status: str
+    status: DeliveryStatus
     notes: str | None
     checked_in_at: datetime | None
     created_at: datetime
