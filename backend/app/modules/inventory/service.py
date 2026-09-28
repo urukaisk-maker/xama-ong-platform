@@ -36,6 +36,19 @@ async def create_batch(db: AsyncSession, data: schemas.BatchCreate) -> models.Ba
     return batch
 
 
+async def update_batch(
+    db: AsyncSession, batch_id: uuid.UUID, data: schemas.BatchUpdate
+) -> models.Batch | None:
+    batch = await db.get(models.Batch, batch_id)
+    if batch is None:
+        return None
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(batch, field, value)
+    await db.commit()
+    await db.refresh(batch)
+    return batch
+
+
 async def list_expiring_soon(
     db: AsyncSession, days: int = 7
 ) -> list[models.Batch]:
@@ -66,6 +79,33 @@ async def consume_batch(
     return batch
 
 
+async def delete_batch(db: AsyncSession, batch_id: uuid.UUID) -> models.Batch | None:
+    batch = await db.get(models.Batch, batch_id)
+    if batch is None:
+        return None
+    await db.delete(batch)
+    await db.commit()
+    return batch
+
+
+async def delete_product(
+    db: AsyncSession, product_id: uuid.UUID
+) -> tuple[models.Product | None, str | None]:
+    product = await db.get(models.Product, product_id)
+    if product is None:
+        return None, None
+    count = await db.scalar(
+        select(func.count(models.Batch.id)).where(
+            models.Batch.product_id == product_id
+        )
+    ) or 0
+    if count > 0:
+        return None, f"El producto tiene {count} lote(s) asociados"
+    await db.delete(product)
+    await db.commit()
+    return product, None
+
+
 async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySummary:
     total_products = await db.scalar(select(func.count(models.Product.id))) or 0
     total_batches = await db.scalar(select(func.count(models.Batch.id))) or 0
@@ -73,7 +113,6 @@ async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySumma
         select(func.coalesce(func.sum(models.Batch.quantity), 0))
         .where(models.Batch.status == "disponible")
     ) or 0
-
     limit = date.today() + timedelta(days=days)
     exp_count = await db.scalar(
         select(func.count(models.Batch.id))
@@ -85,7 +124,6 @@ async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySumma
         .where(models.Batch.status == "disponible")
         .where(models.Batch.expiry_date <= limit)
     ) or 0
-
     return schemas.InventorySummary(
         total_products=int(total_products),
         total_batches=int(total_batches),
@@ -93,65 +131,3 @@ async def get_summary(db: AsyncSession, days: int = 7) -> schemas.InventorySumma
         expiring_soon_count=int(exp_count),
         expiring_soon_kg=float(exp_qty),
     )
-
-
-async def delete_batch(db: AsyncSession, batch_id: uuid.UUID) -> models.Batch | None:
-    batch = await db.get(models.Batch, batch_id)
-    if batch is None:
-        return None
-    await db.delete(batch)
-    await db.commit()
-    return batch
-
-
-async def delete_product(
-    db: AsyncSession, product_id: uuid.UUID
-) -> tuple[models.Product | None, str | None]:
-    """Devuelve (product, error). No borra si tiene lotes asociados."""
-    product = await db.get(models.Product, product_id)
-    if product is None:
-        return None, None
-
-    count = await db.scalar(
-        select(func.count(models.Batch.id)).where(
-            models.Batch.product_id == product_id
-        )
-    ) or 0
-
-    if count > 0:
-        return None, f"El producto tiene {count} lote(s) asociados"
-
-    await db.delete(product)
-    await db.commit()
-    return product, None
-
-
-async def delete_batch(db: AsyncSession, batch_id: uuid.UUID) -> models.Batch | None:
-    batch = await db.get(models.Batch, batch_id)
-    if batch is None:
-        return None
-    await db.delete(batch)
-    await db.commit()
-    return batch
-
-
-async def delete_product(
-    db: AsyncSession, product_id: uuid.UUID
-) -> tuple[models.Product | None, str | None]:
-    """Devuelve (product, error). No borra si tiene lotes asociados."""
-    product = await db.get(models.Product, product_id)
-    if product is None:
-        return None, None
-
-    count = await db.scalar(
-        select(func.count(models.Batch.id)).where(
-            models.Batch.product_id == product_id
-        )
-    ) or 0
-
-    if count > 0:
-        return None, f"El producto tiene {count} lote(s) asociados"
-
-    await db.delete(product)
-    await db.commit()
-    return product, None

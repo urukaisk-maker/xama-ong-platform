@@ -69,6 +69,31 @@ async def create_batch(
     return await service.create_batch(db, payload)
 
 
+@router.patch("/batches/{batch_id}", response_model=schemas.BatchRead)
+async def update_batch_endpoint(
+    batch_id: uuid.UUID,
+    payload: schemas.BatchUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    try:
+        batch = await service.update_batch(db, batch_id, payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    if batch is None:
+        raise HTTPException(status_code=404, detail="Lote no encontrado")
+    await log_action(
+        db,
+        user,
+        action="update",
+        resource_type="batch",
+        resource_id=str(batch_id),
+        description=f"Lote actualizado: {batch.quantity} (cad. {batch.expiry_date})",
+    )
+    await db.commit()
+    return batch
+
+
 @router.delete("/batches/{batch_id}", status_code=204)
 async def delete_batch_endpoint(
     batch_id: uuid.UUID,

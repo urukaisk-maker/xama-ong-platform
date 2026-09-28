@@ -5,6 +5,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+# ─── Product ───
 class ProductBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     category: str | None = None
@@ -21,6 +22,7 @@ class ProductRead(ProductBase):
     created_at: datetime
 
 
+# ─── Batch ───
 class BatchBase(BaseModel):
     product_id: uuid.UUID
     origin: str = Field(..., min_length=1, max_length=100)
@@ -31,6 +33,13 @@ class BatchBase(BaseModel):
 
 class BatchCreate(BatchBase):
     pass
+
+
+class BatchUpdate(BaseModel):
+    origin: str | None = Field(None, min_length=1, max_length=100)
+    quantity: Decimal | None = Field(None, ge=0)
+    expiry_date: date | None = None
+    status: str | None = None
 
 
 class BatchRead(BaseModel):
