@@ -12,3 +12,7 @@ pgdata/
 # Backups (NUNCA subir al repo)
 backups/
 *.sql.gz
+
+# Producción
+.env.production
+backups/
