@@ -1,8 +1,7 @@
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
-from fastapi import File, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -16,6 +15,7 @@ router = APIRouter(prefix="/api", tags=["families"])
 COORD_ROLES = ("junta", "coordinador_reus", "coordinador_tarragona")
 
 
+# ─── Families ───
 @router.get("/families", response_model=list[schemas.FamilyRead])
 async def list_families(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
@@ -87,6 +87,7 @@ async def family_summary(db: AsyncSession = Depends(get_db)):
     return await service.get_family_summary(db)
 
 
+# ─── Deliveries ───
 @router.get("/deliveries", response_model=list[schemas.DeliveryRead])
 async def list_deliveries(
     site: str | None = Query(None, pattern="^(reus|tarragona)$"),
@@ -147,6 +148,7 @@ async def check_in(
     return delivery
 
 
+# ─── Import CSV ───
 @router.post("/families/import/preview", response_model=schemas.ImportPreview)
 async def import_preview(
     file: UploadFile = File(...),

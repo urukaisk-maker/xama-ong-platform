@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Upload, Plus, Users } from "lucide-react";
+import { Plus, Upload, Users, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import AppShell from "@/components/AppShell";
 import { useUser } from "@/components/AuthGuard";
 import ConfirmDelete, { TrashIcon } from "@/components/ConfirmDelete";
 import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
+import Surface from "@/components/ui/Surface";
+import Drawer from "@/components/ui/Drawer";
 import { SkeletonTable } from "@/components/ui/Loading";
 import { api, downloadFile, getToken } from "@/lib/api";
 import type { Family } from "@/lib/types";
@@ -37,9 +40,10 @@ export default function FamiliesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [editing, setEditing] = useState<Family | null>(null);
 
   const { user } = useUser();
-  const canImport =
+  const canEdit =
     user?.role_name != null && COORD_ROLES.includes(user.role_name);
 
   const load = async () => {
@@ -72,7 +76,7 @@ export default function FamiliesPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
             Familias
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -90,7 +94,7 @@ export default function FamiliesPage() {
             <option value="reus">Reus</option>
             <option value="tarragona">Tarragona</option>
           </select>
-          {canImport && (
+          {canEdit && (
             <Button
               variant="outline"
               icon={<Upload className="h-4 w-4" />}
@@ -115,7 +119,7 @@ export default function FamiliesPage() {
         </div>
       </div>
 
-      {showImport && canImport && (
+      {showImport && canEdit && (
         <ImportCSVModal onImported={load} onClose={() => setShowImport(false)} />
       )}
 
@@ -129,10 +133,10 @@ export default function FamiliesPage() {
         />
       )}
 
-            {loading ? (
-        <SkeletonTable rows={8} cols={canImport ? 8 : 7} />
+      {loading ? (
+        <SkeletonTable rows={8} cols={canEdit ? 8 : 7} />
       ) : families.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <Surface hover={false} className="p-16 text-center">
           <div className="mb-3 flex justify-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
               <Users className="h-8 w-8 text-slate-400" />
@@ -144,11 +148,11 @@ export default function FamiliesPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Pulsa "Nueva familia" o importa un CSV para empezar.
           </p>
-        </div>
+        </Surface>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <Surface hover={false} className="overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+            <thead className="border-b border-slate-200/60 bg-slate-50/50 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800/60 dark:bg-slate-800/40 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3">Código</th>
                 <th className="px-4 py-3">Sede</th>
@@ -157,14 +161,14 @@ export default function FamiliesPage() {
                 <th className="px-4 py-3">Contacto</th>
                 <th className="px-4 py-3">Restricciones</th>
                 <th className="px-4 py-3">Estado</th>
-                {canImport && <th className="px-4 py-3"></th>}
+                {canEdit && <th className="px-4 py-3"></th>}
               </tr>
             </thead>
             <tbody className="dark:text-slate-200">
               {families.map((f) => (
                 <tr
                   key={f.id}
-                  className="border-t border-slate-100 transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
+                  className="border-t border-slate-100/60 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-800/40"
                 >
                   <td className="px-4 py-3 font-mono text-xs">
                     {f.reference_code}
@@ -179,36 +183,260 @@ export default function FamiliesPage() {
                     {f.dietary_restrictions ?? "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        f.active
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                      }`}
-                    >
+                    <Badge variant={f.active ? "success" : "neutral"}>
                       {f.active ? "activa" : "inactiva"}
-                    </span>
+                    </Badge>
                   </td>
-                  {canImport && (
+                  {canEdit && (
                     <td className="px-4 py-3 text-right">
-                      <ConfirmDelete
-                        title="¿Borrar esta familia?"
-                        message={`${f.reference_code} · ${f.adults + f.minors} personas. Si tiene entregas, se desactivará en lugar de borrar.`}
-                        onConfirm={() => deleteFamily(f.id)}
-                        trigger={TrashIcon}
-                      />
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditing(f)}
+                          aria-label="Editar"
+                          className="rounded-md p-1.5 text-slate-400 transition hover:bg-xama-50 hover:text-xama-600 dark:hover:bg-xama-950 dark:hover:text-xama-400"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <ConfirmDelete
+                          title="¿Borrar esta familia?"
+                          message={`${f.reference_code} · ${f.adults + f.minors} personas. Si tiene entregas, se desactivará en lugar de borrar.`}
+                          onConfirm={() => deleteFamily(f.id)}
+                          trigger={TrashIcon}
+                        />
+                      </div>
                     </td>
                   )}
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </Surface>
       )}
+
+      {/* Drawer de edición */}
+      <EditFamilyDrawer
+        family={editing}
+        onClose={() => setEditing(null)}
+        onSaved={() => {
+          setEditing(null);
+          toast.success("Familia actualizada");
+          load();
+        }}
+      />
     </AppShell>
   );
 }
 
+/* ─── Drawer de edición ─── */
+function EditFamilyDrawer({
+  family,
+  onClose,
+  onSaved,
+}: {
+  family: Family | null;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [data, setData] = useState({
+    site: "reus",
+    adults: 0,
+    minors: 0,
+    address: "",
+    phone: "",
+    dietary_restrictions: "",
+    notes: "",
+    active: true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (family) {
+      setData({
+        site: family.site,
+        adults: family.adults,
+        minors: family.minors,
+        address: family.address ?? "",
+        phone: family.phone ?? "",
+        dietary_restrictions: family.dietary_restrictions ?? "",
+        notes: family.notes ?? "",
+        active: family.active,
+      });
+      setErr(null);
+    }
+  }, [family]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!family) return;
+    setErr(null);
+    setSaving(true);
+    try {
+      await api(`/api/families/${family.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          site: data.site,
+          adults: data.adults,
+          minors: data.minors,
+          address: data.address || null,
+          phone: data.phone || null,
+          dietary_restrictions: data.dietary_restrictions || null,
+          notes: data.notes || null,
+          active: data.active,
+        }),
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls =
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
+
+  return (
+    <Drawer
+      open={family !== null}
+      onClose={onClose}
+      title={family ? `Editar ${family.reference_code}` : "Editar familia"}
+      subtitle="Modifica los datos y guarda los cambios"
+      footer={
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancelar
+          </Button>
+          <Button
+            variant="primary"
+            loading={saving}
+            onClick={submit}
+            disabled={!family}
+          >
+            {saving ? "Guardando…" : "Guardar cambios"}
+          </Button>
+        </div>
+      }
+    >
+      <form onSubmit={submit} className="space-y-4">
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Sede
+          </span>
+          <select
+            value={data.site}
+            onChange={(e) => setData({ ...data, site: e.target.value })}
+            className={inputCls}
+          >
+            <option value="reus">Reus</option>
+            <option value="tarragona">Tarragona</option>
+          </select>
+        </label>
+
+        <div className="grid grid-cols-2 gap-3">
+          <label className="text-sm">
+            <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+              Adultos
+            </span>
+            <input
+              type="number"
+              min="0"
+              value={data.adults}
+              onChange={(e) =>
+                setData({ ...data, adults: Number(e.target.value) })
+              }
+              className={inputCls}
+            />
+          </label>
+          <label className="text-sm">
+            <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+              Menores
+            </span>
+            <input
+              type="number"
+              min="0"
+              value={data.minors}
+              onChange={(e) =>
+                setData({ ...data, minors: Number(e.target.value) })
+              }
+              className={inputCls}
+            />
+          </label>
+        </div>
+
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Dirección
+          </span>
+          <input
+            value={data.address}
+            onChange={(e) => setData({ ...data, address: e.target.value })}
+            className={inputCls}
+            placeholder="Carrer Major 12, Reus"
+          />
+        </label>
+
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Teléfono
+          </span>
+          <input
+            value={data.phone}
+            onChange={(e) => setData({ ...data, phone: e.target.value })}
+            className={inputCls}
+            placeholder="600 123 456"
+          />
+        </label>
+
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Restricciones alimentarias
+          </span>
+          <input
+            value={data.dietary_restrictions}
+            onChange={(e) =>
+              setData({ ...data, dietary_restrictions: e.target.value })
+            }
+            className={inputCls}
+            placeholder="Sin gluten, sin lactosa..."
+          />
+        </label>
+
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Notas internas
+          </span>
+          <textarea
+            value={data.notes}
+            onChange={(e) => setData({ ...data, notes: e.target.value })}
+            className={`${inputCls} min-h-[80px] resize-y`}
+            placeholder="Notas solo visibles para coordinadores"
+          />
+        </label>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={data.active}
+            onChange={(e) => setData({ ...data, active: e.target.checked })}
+            className="h-4 w-4"
+          />
+          <span className="text-slate-700 dark:text-slate-300">
+            Familia activa (recibe reparto)
+          </span>
+        </label>
+
+        {err && (
+          <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+            {err}
+          </div>
+        )}
+      </form>
+    </Drawer>
+  );
+}
+
+/* ─── Modal de importación CSV ─── */
 function ImportCSVModal({
   onImported,
   onClose,
@@ -291,21 +519,14 @@ function ImportCSVModal({
   };
 
   return (
-    <div className="mb-6 animate-slide-up space-y-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-5 dark:border-emerald-900 dark:bg-emerald-950/30">
+    <Surface hover={false} className="mb-6 space-y-4 p-5">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             Importar familias desde CSV
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Columnas obligatorias:{" "}
-            <code className="rounded bg-slate-200 px-1 text-xs dark:bg-slate-800">
-              reference_code
-            </code>
-            ,{" "}
-            <code className="rounded bg-slate-200 px-1 text-xs dark:bg-slate-800">
-              site
-            </code>{" "}
+            Columnas obligatorias: <code>reference_code</code>, <code>site</code>{" "}
             (reus|tarragona).
           </p>
         </div>
@@ -438,7 +659,7 @@ function ImportCSVModal({
           )}
         </div>
       )}
-    </div>
+    </Surface>
   );
 }
 
@@ -487,6 +708,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/* ─── Formulario nueva familia ─── */
 function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
   const [data, setData] = useState({
     reference_code: "",
@@ -531,10 +753,7 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
     "rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-xama-500 focus:outline-none focus:ring-2 focus:ring-xama-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white";
 
   return (
-    <form
-      onSubmit={submit}
-      className="mb-6 animate-slide-up space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-    >
+    <Surface hover={false} className="mb-6 animate-slide-up space-y-3 p-5">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <input
           placeholder="Referencia (FAM-XXX)"
@@ -601,6 +820,6 @@ function NewFamilyForm({ onCreated }: { onCreated: () => void }) {
       >
         {loading ? "Creando…" : "Crear familia"}
       </Button>
-    </form>
+    </Surface>
   );
 }
