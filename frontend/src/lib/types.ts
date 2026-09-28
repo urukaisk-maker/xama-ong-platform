@@ -56,6 +56,7 @@ export type Batch = {
   quantity: string;
   expiry_date: string;
   status: string;
+  notes: string | null;
   created_at: string;
 };
 
