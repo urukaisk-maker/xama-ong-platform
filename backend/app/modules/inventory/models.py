@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
     String,
+    Text,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -48,6 +49,7 @@ class Batch(Base):
     quantity: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     expiry_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="disponible")
+    notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

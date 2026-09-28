@@ -1,3 +1,4 @@
+cat > ~/proyectos/xama-ong-platform/frontend/src/app/inventory/page.tsx <<'EOF'
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, Package, Pencil } from "lucide-react";
@@ -216,7 +217,6 @@ export default function InventoryPage() {
         </Surface>
       )}
 
-      {/* Drawer de edición */}
       <EditBatchDrawer
         batch={editing}
         product={editing ? getProduct(editing.product_id) : null}
@@ -249,7 +249,7 @@ function EmptyState() {
   );
 }
 
-/* ─── Drawer de edición ─── */
+/* ─── Drawer de edición de lote ─── */
 function EditBatchDrawer({
   batch,
   product,
@@ -266,6 +266,7 @@ function EditBatchDrawer({
     quantity: 0,
     expiry_date: "",
     status: "disponible",
+    notes: "",
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -277,6 +278,7 @@ function EditBatchDrawer({
         quantity: Number(batch.quantity),
         expiry_date: batch.expiry_date,
         status: batch.status,
+        notes: batch.notes ?? "",
       });
       setErr(null);
     }
@@ -295,6 +297,7 @@ function EditBatchDrawer({
           quantity: data.quantity,
           expiry_date: data.expiry_date,
           status: data.status,
+          notes: data.notes || null,
         }),
       });
       onSaved();
@@ -393,6 +396,18 @@ function EditBatchDrawer({
             <option value="agotado">Agotado</option>
             <option value="caducado">Caducado</option>
           </select>
+        </label>
+
+        <label className="text-sm">
+          <span className="mb-1 block font-medium text-slate-700 dark:text-slate-300">
+            Notas internas
+          </span>
+          <textarea
+            value={data.notes}
+            onChange={(e) => setData({ ...data, notes: e.target.value })}
+            className={`${inputCls} min-h-[80px] resize-y`}
+            placeholder="Ej: Producto prioritario para cestas"
+          />
         </label>
 
         {err && (
@@ -550,3 +565,4 @@ function NewBatchForm({
     </Surface>
   );
 }
+EOF
