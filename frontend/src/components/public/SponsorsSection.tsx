@@ -1,35 +1,13 @@
-cat > ~/proyectos/xama-ong-platform/frontend/src/components/public/SponsorsSection.tsx <<'EOF'
-import {
-  Instagram,
-  Twitter,
-  Facebook,
-  Play,
-  ExternalLink,
-  Heart,
-  Users,
-} from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, Heart, Users } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/site-config";
 
 const { ong } = SITE_CONFIG;
 
-const SOCIAL_ICONS = {
-  instagram: Instagram,
-  twitter: Twitter,
-  facebook: Facebook,
-  youtube: Play,
-} as const;
-
-const SOCIAL_LABELS: Record<string, string> = {
-  instagram: "Instagram",
-  twitter: "X / Twitter",
-  facebook: "Facebook",
-  youtube: "YouTube",
-};
-
 export default function SponsorsSection() {
   const socialEntries = Object.entries(ong.social).filter(
     ([, url]) => url && url.length > 0
-  ) as Array<[keyof typeof SOCIAL_ICONS, string]>;
+  );
 
   return (
     <section className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -50,22 +28,17 @@ export default function SponsorsSection() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              {socialEntries.map(([key, url]) => {
-                const Icon = SOCIAL_ICONS[key];
-                return (
-                  <a
-                    key={key}
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={SOCIAL_LABELS[key] ?? key}
-                    className="group flex items-center gap-2 rounded-full border border-slate-200/60 bg-white/80 px-5 py-2.5 text-sm font-medium text-slate-700 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-600 hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{SOCIAL_LABELS[key] ?? key}</span>
-                  </a>
-                );
-              })}
+              {socialEntries.map(([key, url]) => (
+                <a
+                  key={key}
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center gap-2 rounded-full border border-slate-200/60 bg-white/80 px-5 py-2.5 text-sm font-medium text-slate-700 backdrop-blur-md transition-all hover:-translate-y-0.5 hover:border-emerald-300 hover:text-emerald-600 hover:shadow-md dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+                >
+                  <span className="capitalize">{key}</span>
+                </a>
+              ))}
             </div>
           </div>
         )}
@@ -128,4 +101,3 @@ export default function SponsorsSection() {
     </section>
   );
 }
-EOF
