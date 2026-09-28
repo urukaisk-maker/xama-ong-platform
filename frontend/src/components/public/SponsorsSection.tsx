@@ -1,11 +1,12 @@
+cat > ~/proyectos/xama-ong-platform/frontend/src/components/public/SponsorsSection.tsx <<'EOF'
 import {
   Instagram,
   Twitter,
   Facebook,
-  Youtube,
+  Play,
   ExternalLink,
   Heart,
-  Handshake,
+  Users,
 } from "lucide-react";
 import { SITE_CONFIG } from "@/lib/site-config";
 
@@ -15,7 +16,7 @@ const SOCIAL_ICONS = {
   instagram: Instagram,
   twitter: Twitter,
   facebook: Facebook,
-  youtube: Youtube,
+  youtube: Play,
 } as const;
 
 const SOCIAL_LABELS: Record<string, string> = {
@@ -33,7 +34,6 @@ export default function SponsorsSection() {
   return (
     <section className="border-t border-slate-100 bg-white dark:border-slate-800 dark:bg-slate-950">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        {/* ─── Redes sociales ─── */}
         {socialEntries.length > 0 && (
           <div className="mb-16 text-center">
             <div className="mb-4 flex justify-center">
@@ -70,11 +70,10 @@ export default function SponsorsSection() {
           </div>
         )}
 
-        {/* ─── Patrocinadores ─── */}
         <div className="text-center">
           <div className="mb-4 flex justify-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-              <Handshake className="h-6 w-6" />
+              <Users className="h-6 w-6" />
             </div>
           </div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl dark:text-white">
@@ -101,7 +100,6 @@ export default function SponsorsSection() {
           </div>
         </div>
 
-        {/* ─── Reconocimiento externo ─── */}
         {ong.externalLinks.length > 0 && (
           <div className="mt-16 rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-8 text-center dark:border-emerald-900/60 dark:bg-emerald-950/30">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -130,3 +128,4 @@ export default function SponsorsSection() {
     </section>
   );
 }
+EOF
