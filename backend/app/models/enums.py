@@ -69,4 +69,5 @@ class ReferralSource(str, Enum):
     SERVICIOS_SOCIALES = "servicios_sociales"
     POLICIA_LOCAL = "policia_local"
     CRUZ_ROJA = "cruz_roja"
+    VOLUNTARIO = "voluntario"
     OTRO = "otro"
