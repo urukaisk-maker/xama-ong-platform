@@ -8,16 +8,7 @@ export type UserMe = {
   created_at: string;
   role_name: string | null;
 };
-export interface Batch {
-  id: string;
-  product_id: string;
-  origin: string;
-  quantity: number;
-  expiry_date: string;
-  status: string;
-  notes: string | null; // <-- Añade esta línea
-  created_at: string;
-}
+
 export type User = {
   id: string;
   email: string;
@@ -56,6 +47,7 @@ export type Batch = {
   quantity: string;
   expiry_date: string;
   status: string;
+  notes: string | null;
   created_at: string;
 };
 
