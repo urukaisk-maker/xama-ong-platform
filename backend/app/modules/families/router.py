@@ -112,6 +112,28 @@ async def create_delivery(
         raise HTTPException(status_code=400, detail=str(e)) from e
 
 
+@router.patch("/deliveries/{delivery_id}", response_model=schemas.DeliveryRead)
+async def update_delivery_endpoint(
+    delivery_id: uuid.UUID,
+    payload: schemas.DeliveryUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(*COORD_ROLES)),
+):
+    delivery = await service.update_delivery(db, delivery_id, payload)
+    if delivery is None:
+        raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    await log_action(
+        db,
+        user,
+        action="update",
+        resource_type="delivery",
+        resource_id=str(delivery_id),
+        description=f"Entrega actualizada ({delivery.delivery_date})",
+    )
+    await db.commit()
+    return delivery
+
+
 @router.delete("/deliveries/{delivery_id}", status_code=204)
 async def delete_delivery_endpoint(
     delivery_id: uuid.UUID,

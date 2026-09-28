@@ -47,6 +47,27 @@ async def update_family(
     return family
 
 
+async def delete_family(
+    db: AsyncSession, family_id: uuid.UUID
+) -> tuple[models.Family | None, str | None]:
+    family = await db.get(models.Family, family_id)
+    if family is None:
+        return None, None
+    count = await db.scalar(
+        select(func.count(models.Delivery.id)).where(
+            models.Delivery.family_id == family_id
+        )
+    ) or 0
+    if count > 0:
+        family.active = False
+        await db.commit()
+        return family, "soft"
+    await db.delete(family)
+    await db.commit()
+    return family, None
+
+
+# ─── Deliveries ───
 async def list_deliveries(
     db: AsyncSession,
     site: str | None = None,
@@ -69,6 +90,29 @@ async def create_delivery(
 ) -> models.Delivery:
     delivery = models.Delivery(**data.model_dump())
     db.add(delivery)
+    await db.commit()
+    return delivery
+
+
+async def update_delivery(
+    db: AsyncSession, delivery_id: uuid.UUID, data: schemas.DeliveryUpdate
+) -> models.Delivery | None:
+    delivery = await db.get(models.Delivery, delivery_id)
+    if delivery is None:
+        return None
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(delivery, field, value)
+    await db.commit()
+    return delivery
+
+
+async def delete_delivery(
+    db: AsyncSession, delivery_id: uuid.UUID
+) -> models.Delivery | None:
+    delivery = await db.get(models.Delivery, delivery_id)
+    if delivery is None:
+        return None
+    await db.delete(delivery)
     await db.commit()
     return delivery
 
@@ -108,7 +152,6 @@ async def get_family_summary(db: AsyncSession) -> schemas.FamilySummary:
         select(func.coalesce(func.sum(models.Family.adults + models.Family.minors), 0))
         .where(models.Family.active.is_(True))
     ) or 0
-
     return schemas.FamilySummary(
         total_families=int(total),
         active_families=int(active),
@@ -123,57 +166,47 @@ REQUIRED_FIELDS = {"reference_code", "site"}
 
 
 def parse_csv(content: str) -> tuple[list[dict], list[str]]:
-    """Parsea el CSV y devuelve (filas, errores_de_estructura)."""
     errors: list[str] = []
     rows: list[dict] = []
-
     try:
         reader = csv.DictReader(io.StringIO(content))
         if reader.fieldnames is None:
             return [], ["CSV vacío o sin cabecera"]
-
         headers = {h.strip() for h in reader.fieldnames}
         missing = REQUIRED_FIELDS - headers
         if missing:
             return [], [
                 f"Faltan columnas obligatorias: {', '.join(sorted(missing))}"
             ]
-
-        for i, row in enumerate(reader, start=2):  # línea 2 = primera de datos
+        for i, row in enumerate(reader, start=2):
             clean = {k.strip(): (v.strip() if isinstance(v, str) else v)
                      for k, v in row.items() if k}
             clean["_line"] = i
             rows.append(clean)
     except Exception as e:
         errors.append(f"Error parseando CSV: {e}")
-
     return rows, errors
 
 
 def validate_row(row: dict) -> tuple[dict | None, str | None]:
-    """Valida una fila. Devuelve (data, error)."""
     ref = row.get("reference_code", "").strip()
     if not ref:
         return None, "reference_code vacío"
-
     site = row.get("site", "").strip().lower()
     if site not in ("reus", "tarragona"):
-        return None, f"site inválido: '{site}' (debe ser 'reus' o 'tarragona')"
-
+        return None, f"site inválido: '{site}'"
     try:
         adults = int(row.get("adults", "0") or 0)
         if adults < 0:
             raise ValueError
     except (ValueError, TypeError):
-        return None, "adults debe ser un número entero ≥ 0"
-
+        return None, "adults debe ser ≥ 0"
     try:
         minors = int(row.get("minors", "0") or 0)
         if minors < 0:
             raise ValueError
     except (ValueError, TypeError):
-        return None, "minors debe ser un número entero ≥ 0"
-
+        return None, "minors debe ser ≥ 0"
     data = {
         "reference_code": ref,
         "site": site,
@@ -181,75 +214,56 @@ def validate_row(row: dict) -> tuple[dict | None, str | None]:
         "minors": minors,
         "address": (row.get("address") or "").strip() or None,
         "phone": (row.get("phone") or "").strip() or None,
-        "dietary_restrictions": (row.get("dietary_restrictions") or "").strip()
-        or None,
+        "dietary_restrictions": (row.get("dietary_restrictions") or "").strip() or None,
         "notes": (row.get("notes") or "").strip() or None,
         "active": True,
     }
     return data, None
 
 
-async def import_csv_preview(
-    db: AsyncSession, content: str
-) -> dict:
-    """Analiza el CSV y devuelve un informe sin tocar la DB."""
+async def import_csv_preview(db: AsyncSession, content: str) -> dict:
     rows, struct_errors = parse_csv(content)
-
     if struct_errors:
         return {
-            "total_rows": 0,
-            "valid": 0,
-            "invalid": 0,
-            "duplicates": 0,
-            "imported": 0,
-            "errors": struct_errors,
-            "rows": [],
+            "total_rows": 0, "valid": 0, "invalid": 0, "duplicates": 0,
+            "imported": 0, "errors": struct_errors, "rows": [],
         }
-
-    # Reference codes existentes
     existing = await db.execute(select(models.Family.reference_code))
     existing_refs = {r[0] for r in existing.all()}
-
     seen_in_csv: set[str] = set()
     rows_report = []
     valid = 0
     invalid = 0
     duplicates = 0
-
     for row in rows:
         line = row.pop("_line")
         data, err = validate_row(row)
-        status = "valid"
+        status_val = "valid"
         message = None
-
         if err:
-            status = "invalid"
+            status_val = "invalid"
             message = err
             invalid += 1
         else:
             ref = data["reference_code"]
             if ref in existing_refs:
-                status = "duplicate"
+                status_val = "duplicate"
                 message = "Ya existe en la base de datos"
                 duplicates += 1
             elif ref in seen_in_csv:
-                status = "duplicate"
+                status_val = "duplicate"
                 message = "Duplicado en el propio CSV"
                 duplicates += 1
             else:
                 valid += 1
                 seen_in_csv.add(ref)
-
-        rows_report.append(
-            {
-                "line": line,
-                "reference_code": row.get("reference_code", ""),
-                "status": status,
-                "message": message,
-                "data": data,
-            }
-        )
-
+        rows_report.append({
+            "line": line,
+            "reference_code": row.get("reference_code", ""),
+            "status": status_val,
+            "message": message,
+            "data": data,
+        })
     return {
         "total_rows": len(rows),
         "valid": valid,
@@ -261,58 +275,16 @@ async def import_csv_preview(
     }
 
 
-async def import_csv(
-    db: AsyncSession, content: str
-) -> dict:
-    """Importa realmente. Omite duplicados y filas inválidas."""
+async def import_csv(db: AsyncSession, content: str) -> dict:
     preview = await import_csv_preview(db, content)
-
     if preview["errors"]:
         return preview
-
     imported = 0
     for row in preview["rows"]:
         if row["status"] == "valid" and row["data"]:
             family = models.Family(**row["data"])
             db.add(family)
             imported += 1
-
     await db.commit()
     preview["imported"] = imported
     return preview
-
-
-async def delete_family(
-    db: AsyncSession, family_id: uuid.UUID
-) -> tuple[models.Family | None, str | None]:
-    """Soft delete: marca active=False si tiene entregas."""
-    family = await db.get(models.Family, family_id)
-    if family is None:
-        return None, None
-
-    count = await db.scalar(
-        select(func.count(models.Delivery.id)).where(
-            models.Delivery.family_id == family_id
-        )
-    ) or 0
-
-    if count > 0:
-        # Soft delete
-        family.active = False
-        await db.commit()
-        return family, "soft"
-
-    await db.delete(family)
-    await db.commit()
-    return family, None
-
-
-async def delete_delivery(
-    db: AsyncSession, delivery_id: uuid.UUID
-) -> models.Delivery | None:
-    delivery = await db.get(models.Delivery, delivery_id)
-    if delivery is None:
-        return None
-    await db.delete(delivery)
-    await db.commit()
-    return delivery

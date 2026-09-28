@@ -51,6 +51,14 @@ class DeliveryCreate(DeliveryBase):
     pass
 
 
+class DeliveryUpdate(BaseModel):
+    delivery_date: date | None = None
+    site: str | None = Field(None, pattern="^(reus|tarragona)$")
+    volunteer_id: uuid.UUID | None = None
+    status: str | None = None
+    notes: str | None = None
+
+
 class DeliveryRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -81,7 +89,7 @@ class FamilySummary(BaseModel):
 class ImportRow(BaseModel):
     line: int
     reference_code: str
-    status: str  # valid | invalid | duplicate
+    status: str
     message: str | None = None
     data: dict | None = None
 
