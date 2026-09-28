@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import IconByName from "@/components/IconByName";
 import PublicStats from "@/components/PublicStats";
+import SponsorsSection from "@/components/public/SponsorsSection";
+import SponsorsSection from "@/components/public/SponsorsSection";
 import { SectionDonar, Footer } from "./PublicPageClient";
 import { SITE_CONFIG } from "@/lib/site-config";
 
@@ -300,6 +302,7 @@ export default function PublicPage() {
           </p>
         </div>
       </section>
+            <SponsorsSection />
 
       <Footer />
     </main>
