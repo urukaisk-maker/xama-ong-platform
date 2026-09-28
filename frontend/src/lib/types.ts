@@ -98,6 +98,8 @@ export type Shift = {
     id: string;
     shift_id: string;
     user_id: string;
+    user_name: string | null;
+    user_email: string | null;
     hours: number | null;
     attended: boolean;
     notes: string | null;
