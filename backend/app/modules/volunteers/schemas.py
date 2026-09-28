@@ -3,8 +3,6 @@ from datetime import date, datetime, time
 
 from pydantic import BaseModel, ConfigDict, Field
 
-VALID_ROLES = ("vehiculo", "clasificacion", "cestas", "puerta")
-
 
 class ShiftBase(BaseModel):
     shift_date: date
@@ -37,6 +35,8 @@ class AssignmentRead(BaseModel):
     id: uuid.UUID
     shift_id: uuid.UUID
     user_id: uuid.UUID
+    user_name: str | None = None
+    user_email: str | None = None
     hours: float | None
     attended: bool
     notes: str | None

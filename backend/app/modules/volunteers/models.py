@@ -19,6 +19,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.modules.users.models import User
 
 SHIFT_ROLES = ("vehiculo", "clasificacion", "cestas", "puerta")
 
@@ -73,6 +74,15 @@ class ShiftAssignment(Base):
     )
 
     shift: Mapped[Shift] = relationship(back_populates="assignments")
+    user: Mapped[User] = relationship(foreign_keys=[user_id], lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return self.user.full_name if self.user else None
+
+    @property
+    def user_email(self) -> str | None:
+        return self.user.email if self.user else None
 
     __table_args__ = (
         UniqueConstraint("shift_id", "user_id", name="uq_shift_user"),

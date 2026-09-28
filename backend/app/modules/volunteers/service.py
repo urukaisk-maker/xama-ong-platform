@@ -3,13 +3,12 @@ from datetime import date, datetime, timezone
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.modules.users.models import User
 from app.modules.volunteers import models, schemas
 
 
-# ─── Shifts ───
 async def list_shifts(
     db: AsyncSession,
     site: str | None = None,
@@ -20,7 +19,11 @@ async def list_shifts(
 ) -> list[models.Shift]:
     stmt = (
         select(models.Shift)
-        .options(selectinload(models.Shift.assignments))
+        .options(
+            selectinload(models.Shift.assignments).joinedload(
+                models.ShiftAssignment.user
+            )
+        )
         .order_by(models.Shift.shift_date, models.Shift.start_time)
     )
     if site:
@@ -40,7 +43,11 @@ async def list_shifts(
 async def get_shift(db: AsyncSession, shift_id: uuid.UUID) -> models.Shift | None:
     stmt = (
         select(models.Shift)
-        .options(selectinload(models.Shift.assignments))
+        .options(
+            selectinload(models.Shift.assignments).joinedload(
+                models.ShiftAssignment.user
+            )
+        )
         .where(models.Shift.id == shift_id)
     )
     result = await db.execute(stmt)
@@ -137,7 +144,6 @@ async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHou
     user = await db.get(User, user_id)
     if user is None:
         raise ValueError("Usuario no encontrado")
-
     total_hours = await db.scalar(
         select(func.coalesce(func.sum(models.ShiftAssignment.hours), 0)).where(
             models.ShiftAssignment.user_id == user_id,
@@ -155,7 +161,6 @@ async def my_hours(db: AsyncSession, user_id: uuid.UUID) -> schemas.VolunteerHou
             models.ShiftAssignment.attended.is_(True),
         )
     ) or 0
-
     return schemas.VolunteerHours(
         user_id=user_id,
         full_name=user.full_name,
@@ -190,7 +195,6 @@ async def hours_summary(db: AsyncSession, limit: int = 20) -> schemas.HoursSumma
     )
     result = await db.execute(stmt)
     rows = result.all()
-
     ranking = [
         schemas.VolunteerHours(
             user_id=r._mapping["id"],
@@ -201,10 +205,8 @@ async def hours_summary(db: AsyncSession, limit: int = 20) -> schemas.HoursSumma
         )
         for r in rows
     ]
-
     total_hours = sum(v.total_hours for v in ranking)
     total_shifts = sum(v.total_shifts for v in ranking)
-
     return schemas.HoursSummary(
         total_volunteers=len(ranking),
         total_hours=round(total_hours, 2),
