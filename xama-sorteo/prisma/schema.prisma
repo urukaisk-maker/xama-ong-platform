@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Sorteo {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  premio      String
+  fechaSorteo DateTime?
+  estado      String   @default("borrador")
+  maxNumeros  Int      @default(40)
+  numeros     Numero[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Participante {
+  id             Int      @id @default(autoincrement())
+  nombre         String
+  telefono       String?
+  email          String?
+  consentimiento Boolean  @default(false)
+  numeros        Numero[]
+  createdAt      DateTime @default(now())
+}
+
+model Numero {
+  id              Int           @id @default(autoincrement())
+  sorteoId        Int
+  sorteo          Sorteo        @relation(fields: [sorteoId], references: [id])
+  numero          Int
+  estado          String        @default("disponible")
+  participanteId  Int?
+  participante    Participante? @relation(fields: [participanteId], references: [id])
+  fechaAsignacion DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([sorteoId, numero])
+}
